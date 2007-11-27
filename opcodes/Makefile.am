@@ -124,6 +124,8 @@ CFILES = \
 	m10300-opc.c \
 	mmix-dis.c \
 	mmix-opc.c \
+	nios2-opc.c \
+	nios2-dis.c \
 	ns32k-dis.c \
 	openrisc-asm.c \
 	openrisc-desc.c \
@@ -236,6 +238,8 @@ ALL_MACHINES = \
 	mmix-dis.lo \
 	mmix-opc.lo \
 	msp430-dis.lo \
+	nios2-opc.lo \
+	nios2-dis.lo \
 	ns32k-dis.lo \
 	openrisc-asm.lo \
 	openrisc-desc.lo \
@@ -736,6 +740,13 @@ mmix-dis.lo: mmix-dis.c $(INCDIR)/opcode/mmix.h $(INCDIR)/dis-asm.h \
   $(BFD_H) $(INCDIR)/ansidecl.h $(INCDIR)/symcat.h $(INCDIR)/libiberty.h \
   opintl.h
 mmix-opc.lo: mmix-opc.c $(INCDIR)/opcode/mmix.h $(INCDIR)/symcat.h
+nios2-opc.lo: nios2-opc.c sysdep.h config.h $(INCDIR)/ansidecl.h \
+  $(INCDIR)/opcode/nios2.h
+nios2-dis.lo: nios2-dis.c sysdep.h config.h $(INCDIR)/ansidecl.h \
+  $(INCDIR)/dis-asm.h $(BFD_H) $(INCDIR)/symcat.h $(INCDIR)/opcode/nios2.h \
+  opintl.h $(BFDDIR)/elf-bfd.h $(INCDIR)/elf/common.h \
+  $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h $(INCDIR)/bfdlink.h \
+  $(INCDIR)/elf/nios2.h $(INCDIR)/elf/reloc-macros.h
 ns32k-dis.lo: ns32k-dis.c $(BFD_H) $(INCDIR)/ansidecl.h \
   $(INCDIR)/symcat.h sysdep.h config.h $(INCDIR)/dis-asm.h \
   $(INCDIR)/opcode/ns32k.h opintl.h

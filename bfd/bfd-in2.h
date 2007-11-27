@@ -1762,6 +1762,8 @@ enum bfd_architecture
 #define bfd_mach_msp44          44
   bfd_arch_xtensa,    /* Tensilica's Xtensa cores.  */
 #define bfd_mach_xtensa        1
+  bfd_arch_nios2,
+#define bfd_mach_nios2		   1
   bfd_arch_last
   };
 
@@ -3509,6 +3511,24 @@ assembler-expanded instructions.  This is commonly used
 internally by the linker after analysis of a 
 BFD_RELOC_XTENSA_ASM_EXPAND.  */
   BFD_RELOC_XTENSA_ASM_SIMPLIFY,
+
+/* Relocations used by the Altera New Jersey core  */
+  BFD_RELOC_NIOS2_S16,
+  BFD_RELOC_NIOS2_U16,
+  BFD_RELOC_NIOS2_CALL26,
+  BFD_RELOC_NIOS2_IMM5,
+  BFD_RELOC_NIOS2_CACHE_OPX,
+  BFD_RELOC_NIOS2_IMM6,
+  BFD_RELOC_NIOS2_IMM8,
+  BFD_RELOC_NIOS2_HI16,
+  BFD_RELOC_NIOS2_LO16,
+  BFD_RELOC_NIOS2_HIADJ16,
+  BFD_RELOC_NIOS2_GPREL,
+  BFD_RELOC_NIOS2_UJMP,
+  BFD_RELOC_NIOS2_CJMP,
+  BFD_RELOC_NIOS2_CALLR,
+  BFD_RELOC_NIOS2_ALIGN,
+
   BFD_RELOC_UNUSED };
 typedef enum bfd_reloc_code_real bfd_reloc_code_real_type;
 reloc_howto_type *bfd_reloc_type_lookup

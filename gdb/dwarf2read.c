@@ -2483,8 +2483,9 @@ dwarf2_get_pc_bounds (struct die_info *die, CORE_ADDR *lowpc,
      labels are not in the output, so the relocs get a value of 0.
      If this is a discarded function, mark the pc bounds as invalid,
      so that GDB will ignore it.  */
-  if (low == 0 && (bfd_get_file_flags (obfd) & HAS_RELOC) == 0)
-    return 0;
+  /* PBrookes - commented to avoid psymtab symtab mismatch */
+  /* if (low == 0 && (bfd_get_file_flags (obfd) & HAS_RELOC) == 0)
+    return 0; */
 
   *lowpc = low;
   *highpc = high;

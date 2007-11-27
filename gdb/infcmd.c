@@ -824,8 +824,9 @@ jump_command (char *arg, int from_tty)
   sal = sals.sals[0];
   xfree (sals.sals);
 
+  /* FIXME: Demoted error message to a warning */
   if (sal.symtab == 0 && sal.pc == 0)
-    error ("No source file has been specified.");
+    warning ("No source file has been specified.");
 
   resolve_sal_pc (&sal);	/* May error out */
 

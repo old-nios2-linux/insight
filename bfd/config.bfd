@@ -59,6 +59,7 @@ m6812*|m68hc12*) targ_archs="bfd_m68hc12_arch bfd_m68hc11_arch" ;;
 m68*)	         targ_archs=bfd_m68k_arch ;;
 m88*)	         targ_archs=bfd_m88k_arch ;;
 mips*)	         targ_archs=bfd_mips_arch ;;
+nios2*)	         targ_archs=bfd_nios2_arch ;;
 or32*)		 targ_archs=bfd_or32_arch ;;
 pdp11*)	         targ_archs=bfd_pdp11_arch ;;
 pj*)	         targ_archs="bfd_pj_arch bfd_i386_arch";;
@@ -869,6 +870,10 @@ case "${targ}" in
   ns32k-*-netbsd* | ns32k-*-lites* | ns32k-*-openbsd*)
     targ_defvec=pc532netbsd_vec
     targ_underscore=yes
+    ;;
+
+  nios2-*-*)
+    targ_defvec=bfd_elf32_littlenios2_vec
     ;;
 
   openrisc-*-elf)

@@ -573,6 +573,7 @@ libaout_h =	$(BFD_SRC)/libaout.h
 libbfd_h =	$(BFD_SRC)/libbfd.h
 remote_sim_h =	$(INCLUDE_DIR)/gdb/remote-sim.h
 demangle_h =    $(INCLUDE_DIR)/demangle.h
+nios2_h =          $(INCLUDE_DIR)/opcode/nios2.h
 obstack_h =     $(INCLUDE_DIR)/obstack.h
 opcode_m68hc11_h = $(INCLUDE_DIR)/opcode/m68hc11.h
 readline_h = 	$(READLINE_SRC)/readline.h
@@ -2072,6 +2073,7 @@ monitor.o: monitor.c $(defs_h) $(gdbcore_h) $(target_h) $(gdb_string_h) \
 	$(command_h) $(serial_h) $(monitor_h) $(gdbcmd_h) $(inferior_h) \
 	$(gdb_regex_h) $(srec_h) $(regcache_h)
 nbsd-tdep.o: nbsd-tdep.c $(defs_h) $(gdb_string_h) $(solib_svr4_h)
+nios2-tdep.o: nios2-tdep.c $(defs_h) $(symtab_h) $(frame_h) $(nios2_h)
 nlmread.o: nlmread.c $(defs_h) $(bfd_h) $(symtab_h) $(symfile_h) \
 	$(objfiles_h) $(buildsym_h) $(stabsread_h) $(block_h)
 ns32knbsd-nat.o: ns32knbsd-nat.c $(defs_h) $(inferior_h) $(target_h) \

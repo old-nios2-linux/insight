@@ -26,6 +26,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define ARCH_arm
 #define ARCH_avr
 #define ARCH_cris
+#define ARCH_crx
 #define ARCH_d10v
 #define ARCH_d30v
 #define ARCH_dlx
@@ -72,6 +73,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define ARCH_z8k
 #define ARCH_frv
 #define ARCH_iq2000
+#define ARCH_nios2
 #define INCLUDE_SHMEDIA
 #endif
 
@@ -123,6 +125,11 @@ disassembler (abfd)
       disassemble = cris_get_disassembler (abfd);
       break;
 #endif
+#ifdef ARCH_crx
+    case bfd_arch_crx:
+      disassemble = print_insn_crx;
+      break;
+#endif
 #ifdef ARCH_d10v
     case bfd_arch_d10v:
       disassemble = print_insn_d10v;
@@ -146,7 +153,8 @@ disassembler (abfd)
 	disassemble = print_insn_h8300h;
       else if (bfd_get_mach (abfd) == bfd_mach_h8300s
 	       || bfd_get_mach (abfd) == bfd_mach_h8300sn
-	       || bfd_get_mach (abfd) == bfd_mach_h8300sx)
+	       || bfd_get_mach (abfd) == bfd_mach_h8300sx
+	       || bfd_get_mach (abfd) == bfd_mach_h8300sxn)
 	disassemble = print_insn_h8300s;
       else
 	disassemble = print_insn_h8300;
@@ -374,6 +382,11 @@ disassembler (abfd)
     case bfd_arch_iq2000:
       disassemble = print_insn_iq2000;
       break;
+#endif
+#ifdef ARCH_nios2
+	case bfd_arch_nios2:
+	  disassemble = print_insn_nios2;
+	  break;
 #endif
     default:
       return 0;
