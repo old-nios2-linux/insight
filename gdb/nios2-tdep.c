@@ -1154,13 +1154,22 @@ nios2_breakpoint_from_pc (CORE_ADDR *bp_addr, int *bp_size)
 int
 gdb_print_insn_nios2 (bfd_vma memaddr, disassemble_info *info)
 {
-  return (print_insn_nios2 (memaddr, info));
+  if (info->endian == BFD_ENDIAN_BIG)
+    {
+      return print_insn_big_nios2 (memaddr, info);
+    }
+  else
+    {
+      return print_insn_little_nios2 (memaddr, info);
+    }
 }
 
 
 
 /* Adjust the address downward (direction of stack growth) so that it
    is correctly aligned for a new stack frame.  */
+
+/* ??? Big endian issues here? */
 
 static CORE_ADDR
 nios2_frame_align (struct gdbarch *gdbarch, CORE_ADDR addr)
@@ -1380,7 +1389,6 @@ static struct gdbarch *
 nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
   struct gdbarch *gdbarch;
-  struct gdbarch_tdep *tdep;
   int register_bytes, i;
 
   /* Find a candidate among the list of pre-declared architectures. */
@@ -1389,10 +1397,9 @@ nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     return arches->gdbarch;
 
   /* None found, create a new architecture from the information
-     provided. */
-  tdep = 0 ; /*(struct gdbarch_tdep *) xmalloc (sizeof (struct gdbarch_tdep));*/
-  gdbarch = gdbarch_alloc (&info, tdep);
-
+     provided.  We don't have any architecture specific state, so just
+     pass in 0 for the struct gdbarch_tdep parameter.  */
+  gdbarch = gdbarch_alloc (&info, (struct gdbarch_tdep *)0);
 
   /* Data type sizes.  */
   set_gdbarch_ptr_bit (gdbarch, 32);
@@ -1403,8 +1410,24 @@ nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_long_long_bit (gdbarch, 64);
   set_gdbarch_float_bit (gdbarch, 32);
   set_gdbarch_double_bit (gdbarch, 64);
+
+  switch (info.byte_order)
+    {
+    case BFD_ENDIAN_BIG:
+      set_gdbarch_float_format (gdbarch, &floatformat_ieee_single_big);
+      set_gdbarch_double_format (gdbarch, &floatformat_ieee_double_big);
+      break;
+
+    case BFD_ENDIAN_LITTLE:
   set_gdbarch_float_format (gdbarch, &floatformat_ieee_single_little);
   set_gdbarch_double_format (gdbarch, &floatformat_ieee_double_little);
+      break;
+
+    default:
+      internal_error (__FILE__, __LINE__,
+                      "nios2_gdbarch_init: bad byte ordering");
+      break;
+    }
 
   /* The register set.  */
   set_gdbarch_num_regs (gdbarch, NIOS2_NUM_REGS);

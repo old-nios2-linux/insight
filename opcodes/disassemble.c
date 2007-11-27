@@ -385,7 +385,10 @@ disassembler (abfd)
 #endif
 #ifdef ARCH_nios2
 	case bfd_arch_nios2:
-	  disassemble = print_insn_nios2;
+      if (bfd_big_endian (abfd))
+	disassemble = print_insn_big_nios2;
+      else
+	disassemble = print_insn_little_nios2;
 	  break;
 #endif
     default:

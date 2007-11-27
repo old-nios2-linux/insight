@@ -47,14 +47,16 @@ static int nios2_print_insn_arg (const char *argptr, unsigned long opcode,
 
 
 /* print_insn_nios2 is the main disassemble function for New Jersey.
-   The function diassembler(abfd) (source in disassemble.c)
-   returns a pointer to this function when the bfd machine type is
-   New Jersey. print_insn_nios2 reads the instruction word at the
-   address given, and prints the disassembled instruction on the
-   stream info->stream using info->fprintf_func. */
+   The function diassembler(abfd) (source in disassemble.c) returns a
+   pointer to this either print_insn_big_nios2 or
+   print_insn_little_nios2, which in turn call this function, when the
+   bfd machine type is New Jersey. print_insn_nios2 reads the
+   instruction word at the address given, and prints the disassembled
+   instruction on the stream info->stream using info->fprintf_func. */
 
-int
-print_insn_nios2 (bfd_vma address, disassemble_info * info)
+static int
+print_insn_nios2 (bfd_vma address, disassemble_info * info,
+                  enum bfd_endian endianness)
 {
   /* buffer into which the instruction bytes are written */
   bfd_byte buffer[INSNLEN];
@@ -66,9 +68,12 @@ print_insn_nios2 (bfd_vma address, disassemble_info * info)
   status = (*info->read_memory_func) (address, buffer, INSNLEN, info);
   if (status == 0)
     {
-      status =
-	nios2_disassemble (address, (unsigned long) bfd_getl32 (buffer),
-			   info);
+      unsigned long insn;
+      if (endianness == BFD_ENDIAN_BIG)
+        insn = (unsigned long) bfd_getb32 (buffer);
+      else
+        insn = (unsigned long) bfd_getl32 (buffer);
+      status = nios2_disassemble (address, insn, info);
     }
   else
     {
@@ -76,6 +81,18 @@ print_insn_nios2 (bfd_vma address, disassemble_info * info)
       status = -1;
     }
   return status;
+}
+
+int
+print_insn_big_nios2 (bfd_vma address, disassemble_info * info)
+{
+  return print_insn_nios2 (address, info, BFD_ENDIAN_BIG);
+}
+
+int
+print_insn_little_nios2 (bfd_vma address, disassemble_info * info)
+{
+  return print_insn_nios2 (address, info, BFD_ENDIAN_LITTLE);
 }
 
 /* Data structures used by the opcode hash table */

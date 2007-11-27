@@ -872,8 +872,19 @@ case "${targ}" in
     targ_underscore=yes
     ;;
 
+  nios2eb-*-*)
+    targ_defvec=bfd_elf32_bignios2_vec
+    targ_selvecs=bfd_elf32_littlenios2_vec
+    ;;
+
+  nios2el-*-*)
+    targ_defvec=bfd_elf32_littlenios2_vec
+    targ_selvecs=bfd_elf32_bignios2_vec
+    ;;
+
   nios2-*-*)
     targ_defvec=bfd_elf32_littlenios2_vec
+    targ_selvecs=bfd_elf32_bignios2_vec
     ;;
 
   openrisc-*-elf)

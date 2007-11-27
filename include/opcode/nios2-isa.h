@@ -46,6 +46,7 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define DATAPATH_MSB 31
 #define DATAPATH_SZ 32
 #define DATAPATH_MASK 0xffffffff
+#define EMPTY_CRST_IW 127034
 #define EMPTY_HBREAK_IW 4040762
 #define EMPTY_INTR_IW 3926074
 #define EMPTY_NOP_IW 100410
@@ -730,6 +731,7 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define OPX_CMPLT 16
 #define OPX_CMPLTU 48
 #define OPX_CMPNE 24
+#define OPX_CRST 62
 #define OPX_DIV 37
 #define OPX_DIVU 36
 #define OPX_ERET 1
@@ -780,13 +782,17 @@ extern const char* opx_names[NUM_OPX_INSTS];
 extern unsigned char op_prop_supervisor_only[64];
 extern unsigned char opx_prop_supervisor_only[64];
 
-#define IW_PROP_FLUSH_PIPE(Iw) ( \
+#define IW_PROP_INITI_FLUSHI(Iw) ( \
   ( \
-    ((GET_IW_OPX((Iw)) == OPX_FLUSHP) && IS_OPX_INST(Iw)) || \
-    ((GET_IW_OPX((Iw)) == OPX_BRET) && IS_OPX_INST(Iw)) \
+    ((GET_IW_OPX((Iw)) == OPX_INITI) && IS_OPX_INST(Iw)) || \
+    ((GET_IW_OPX((Iw)) == OPX_FLUSHI) && IS_OPX_INST(Iw)) \
   ) \
  \
 )
+
+#define IW_PROP_FLUSH_PIPE(Iw) ( \
+    (IS_OPX_INST(Iw) && opx_prop_flush_pipe[GET_IW_OPX(Iw)]))
+extern unsigned char opx_prop_flush_pipe[64];
 
 #define IW_PROP_JMP_INDIRECT_NON_TRAP(Iw) ( \
     (IS_OPX_INST(Iw) && opx_prop_jmp_indirect_non_trap[GET_IW_OPX(Iw)]))
@@ -866,6 +872,13 @@ extern unsigned char opx_prop_mul[64];
   ( \
     ((GET_IW_OPX((Iw)) == OPX_BREAK) && IS_OPX_INST(Iw)) || \
     ((GET_IW_OPX((Iw)) == OPX_HBREAK) && IS_OPX_INST(Iw)) \
+  ) \
+ \
+)
+
+#define IW_PROP_CRST(Iw) ( \
+  ( \
+    ((GET_IW_OPX((Iw)) == OPX_CRST) && IS_OPX_INST(Iw)) \
   ) \
  \
 )
@@ -1222,14 +1235,6 @@ extern unsigned char op_prop_mem[64];
     (op_prop_initd_flushd_flushda[GET_IW_OP(Iw)]))
 extern unsigned char op_prop_initd_flushd_flushda[64];
 
-#define IW_PROP_INITI_FLUSHI(Iw) ( \
-  ( \
-    ((GET_IW_OPX((Iw)) == OPX_INITI) && IS_OPX_INST(Iw)) || \
-    ((GET_IW_OPX((Iw)) == OPX_FLUSHI) && IS_OPX_INST(Iw)) \
-  ) \
- \
-)
-
 #define IW_PROP_LOAD_IO(Iw) ( \
     (op_prop_load_io[GET_IW_OP(Iw)]))
 extern unsigned char op_prop_load_io[64];
@@ -1438,8 +1443,9 @@ typedef struct {
 #define SRAI_INST_CODE 82
 #define SRA_INST_CODE 83
 #define INTR_INST_CODE 84
-#define RSV_INST_CODE 85
-#define NUM_NIOS2_INST_CODES 86
+#define CRST_INST_CODE 85
+#define RSV_INST_CODE 86
+#define NUM_NIOS2_INST_CODES 87
 
 extern Nios2InstInfo nios2InstInfo[NUM_NIOS2_INST_CODES];
 

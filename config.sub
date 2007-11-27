@@ -139,7 +139,7 @@ case $os in
 	-sun*os*)
 		# Prevent following clause from handling this invalid input.
 		;;
-	-dec* | -mips* | -nios2* | -nios2* | -sequent* | -encore* | -pc532* | -sgi* | -sony* | \
+	-dec* | -mips* | -sequent* | -encore* | -pc532* | -sgi* | -sony* | \
 	-att* | -7300* | -3300* | -delta* | -motorola* | -sun[234]* | \
 	-unicom* | -ibm* | -next | -hp | -isi* | -apollo | -altos* | \
 	-convergent* | -ncr* | -news | -32* | -3600* | -3100* | -hitachi* |\
@@ -255,7 +255,7 @@ case $basic_machine in
 	| mipstx39 | mipstx39el \
 	| mn10200 | mn10300 \
 	| msp430 \
-	| nios2 | nios2 \
+	| nios2 | nios2eb | nios2el \
 	| ns16k | ns32k \
 	| openrisc | or32 \
 	| pdp10 | pdp11 | pj | pjl \
@@ -328,7 +328,6 @@ case $basic_machine in
 	| mipsisa64sr71k-* | mipsisa64sr71kel-* \
 	| mipstx39-* | mipstx39el-* \
 	| msp430-* \
-	| nios2 | nios2 \
 	| none-* | np1-* | nv1-* | ns16k-* | ns32k-* \
 	| orion-* \
 	| pdp10-* | pdp11-* | pj-* | pjl-* | pn-* | power-* \
@@ -1355,9 +1354,6 @@ case $basic_machine in
 		os=-elf
 		;;
 	mips*-*)
-		os=-elf
-		;;
-	nios2*-* | nios2*-*)
 		os=-elf
 		;;
 	or32-*)

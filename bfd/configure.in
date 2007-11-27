@@ -646,6 +646,7 @@ do
     bfd_elf32_mn10300_vec)	tb="$tb elf-m10300.lo elf32.lo $elf" ;;
     bfd_elf32_msp430_vec)	tb="$tb elf32-msp430.lo elf32.lo $elf" ;;
     bfd_elf32_littlenios2_vec)     tb="$tb elf32-nios2.lo elf32.lo $elf" ;;
+    bfd_elf32_bignios2_vec)     tb="$tb elf32-nios2.lo elf32.lo $elf" ;;
     bfd_elf32_nbigmips_vec)	tb="$tb elfn32-mips.lo elfxx-mips.lo elf32.lo $elf ecofflink.lo"; target_size=64 ;;
     bfd_elf32_nlittlemips_vec)	tb="$tb elfn32-mips.lo elfxx-mips.lo elf32.lo $elf ecofflink.lo"; target_size=64 ;;
     bfd_elf32_ntradbigmips_vec)	tb="$tb elfn32-mips.lo elfxx-mips.lo elf32.lo $elf ecofflink.lo"; target_size=64 ;;

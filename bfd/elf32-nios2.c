@@ -168,6 +168,7 @@ static asection *nios2_elf32_gc_mark_hook   (asection * sec,
 
 /* target vector */
 extern const bfd_target bfd_elf32_littlenios2_vec;
+extern const bfd_target bfd_elf32_bignios2_vec;
 
 /* The relocation table used for SHT_REL sections.  */
 
@@ -2182,7 +2183,7 @@ nios2_elf32_post_process_headers (bfd *abfd,
 /* Support for SGI-ish mips targets. */
 #define TARGET_LITTLE_SYM               bfd_elf32_littlenios2_vec
 #define TARGET_LITTLE_NAME              "elf32-littlenios2"
-//#define TARGET_BIG_SYM                        bfd_elf32_bignios2_vec
-//#define TARGET_BIG_NAME                       "elf32-bignios2"
+#define TARGET_BIG_SYM                  bfd_elf32_bignios2_vec
+#define TARGET_BIG_NAME                 "elf32-bignios2"
 
 #include "elf32-target.h"
