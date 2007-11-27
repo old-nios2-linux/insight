@@ -82,7 +82,7 @@ const struct nios2_reg nios2_builtin_regs[] = {
   {"pteaddr", 8},
   {"tlbacc", 9},
   {"tlbmisc", 10},
-  {"ctl11", 11},
+  {"fstatus", 11},
   {"ctl12", 12},
   {"ctl13", 13},
   {"ctl14", 14},
@@ -103,6 +103,8 @@ const struct nios2_reg nios2_builtin_regs[] = {
   {"ctl29", 29},
   {"ctl30", 30},
   {"ctl31", 31},
+
+  /* alternative names for special control registers */
   {"ctl0", 0},
   {"ctl1", 1},
   {"ctl2", 2},
@@ -112,6 +114,7 @@ const struct nios2_reg nios2_builtin_regs[] = {
   {"ctl8", 8},
   {"ctl9", 9},
   {"ctl10", 10},
+  {"ctl11", 11},
 
   /* coprocessor register names */
   {"c0", 0},
@@ -248,6 +251,7 @@ const struct nios2_opcode nios2_builtin_opcodes[] =
        {"div",          "d,s,t",        "d,s,t,E",     3,         OP_MATCH_DIV,           OP_MASK_ROPX | OP_MASK_ROP,             0, 									no_overflow },
        {"divu",         "d,s,t",        "d,s,t,E",     3,         OP_MATCH_DIVU,          OP_MASK_ROPX | OP_MASK_ROP,             0, 									no_overflow },
        {"jmp",          "s",            "s,E",         1,         OP_MATCH_JMP,           OP_MASK_JMP,                            0, 									no_overflow },
+       {"jmpi",         "m",            "m,E",         1,         OP_MATCH_JMPI,          OP_MASK_IOP,                            0,						                        no_overflow },
        {"ldb",          "t,i(s)",       "t,i(s)E",     3,         OP_MATCH_LDB,           OP_MASK_IOP,                            0,									address_offset_overflow },
        {"ldbio",        "t,i(s)",       "t,i(s)E",     3,         OP_MATCH_LDBIO,         OP_MASK_IOP,                            0,									address_offset_overflow },
        {"ldbu",         "t,i(s)",       "t,i(s)E",     3,         OP_MATCH_LDBU,          OP_MASK_IOP,                            0,									address_offset_overflow },

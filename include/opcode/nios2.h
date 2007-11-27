@@ -225,6 +225,7 @@ struct nios2_reg
 #define OP_MATCH_CMPLTI         OP_CMPLTI
 #define OP_MATCH_CMPLTUI        OP_CMPLTUI
 #define OP_MATCH_CMPNEI         OP_CMPNEI
+#define OP_MATCH_JMPI           OP_JMPI
 #define OP_MATCH_LDB            OP_LDB
 #define OP_MATCH_LDBIO          OP_LDBIO
 #define OP_MATCH_LDBU           OP_LDBU
@@ -249,6 +250,8 @@ struct nios2_reg
 #define OP_MATCH_XORHI          OP_XORHI
 #define OP_MATCH_XORI           OP_XORI
 #define OP_MATCH_OPX            OP_OPX
+
+
 
 /* OPX instruction values */
 #define OP_MATCH_ADD            ((OPX_ADD << IW_OPX_LSB) | (OP_OPX))
