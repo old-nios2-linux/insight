@@ -143,10 +143,10 @@ static void nios2_elf32_post_process_headers
   (bfd *, struct bfd_link_info *);
 
 static bfd_boolean nios2_elf32_section_from_shdr
-  (bfd *, Elf_Internal_Shdr *, const char *name);
+  (bfd *, Elf_Internal_Shdr *, const char *name, int shindex);
 
 static bfd_boolean nios2_elf32_section_flags
-  (flagword *, Elf_Internal_Shdr *);
+  (flagword *, const Elf_Internal_Shdr *);
 
 static bfd_boolean nios2_elf32_fake_sections
   (bfd *, Elf_Internal_Shdr *, asection *);
@@ -622,8 +622,8 @@ nios2_elf32_relax_section (bfd * abfd,
 
   /* If this is the first time we have been called for this section,
      initialize the cooked size.  */
-  if (sec->_cooked_size == 0)
-    sec->_cooked_size = sec->_raw_size;
+  if (sec->size == 0)
+    sec->size = sec->rawsize;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
 
@@ -658,12 +658,12 @@ nios2_elf32_relax_section (bfd * abfd,
 	  else
 	    {
 	      /* Go get them off disk.  */
-	      contents = (bfd_byte *) bfd_malloc (sec->_raw_size);
+	      contents = (bfd_byte *) bfd_malloc (sec->rawsize);
 	      if (contents == NULL)
 		goto error_return;
 
 	      if (!bfd_get_section_contents (abfd, sec, contents,
-					     (file_ptr) 0, sec->_raw_size))
+					     (file_ptr) 0, sec->rawsize))
 		goto error_return;
 	    }
 	}
@@ -1007,7 +1007,7 @@ nios2_elf32_relax_delete_bytes (bfd * abfd,
 
   irelalign = NULL;
   /* +1 because we need to readjust symbols at end of section */
-  toaddr = sec->_cooked_size + 1;
+  toaddr = sec->size + 1;
 
   irel = elf_section_data (sec)->relocs;
   irelend = irel + sec->reloc_count;
@@ -1030,7 +1030,7 @@ nios2_elf32_relax_delete_bytes (bfd * abfd,
 	   (size_t) ((toaddr - 1) - addr - count));
 
   if (irelalign == NULL)
-    sec->_cooked_size -= count;
+    sec->size -= count;
   else
     {
       int i;
@@ -1112,21 +1112,25 @@ nios2_elf32_relax_delete_bytes (bfd * abfd,
 
 struct bfd_link_info *nios2_link_info = NULL;
 
+/*
 void
 _bfd_set_link_info (info)
      struct bfd_link_info *info;
 {
   nios2_link_info = info;
 }
+*/
 
 bfd_boolean linker_force_make_executable = FALSE;
 
+/*
 void
 _bfd_set_force_make_executable (force)
      bfd_boolean force;
 {
   linker_force_make_executable = force;
 }
+*/
 
 /* Set the GP value for OUTPUT_BFD.  Returns FALSE if this is a
    dangerous relocation.  */
@@ -1905,7 +1909,7 @@ nios2_elf32_relocate_section (bfd * output_bfd,
 	    {
 	    case bfd_reloc_overflow:
 	      r = info->callbacks->reloc_overflow
-		(info, name, howto->name, (bfd_vma) 0,
+		(info, (h ? &h->root : NULL), name, howto->name, (bfd_vma) 0,
 		 input_bfd, input_section, rel->r_offset);
 	      break;
 
@@ -1954,7 +1958,7 @@ nios2_elf32_relocate_section (bfd * output_bfd,
 
 static bfd_boolean
 nios2_elf32_section_from_shdr (bfd *abfd,
-     Elf_Internal_Shdr *hdr, const char *name)
+     Elf_Internal_Shdr *hdr, const char *name, int shindex)
 {
   asection *newsect;
 
@@ -1973,7 +1977,7 @@ nios2_elf32_section_from_shdr (bfd *abfd,
      }
    */
 
-  if (!_bfd_elf_make_section_from_shdr (abfd, hdr, name))
+  if (!_bfd_elf_make_section_from_shdr (abfd, hdr, name, shindex))
     return FALSE;
 
   newsect = hdr->bfd_section;
@@ -1994,7 +1998,7 @@ nios2_elf32_section_from_shdr (bfd *abfd,
 /* Convert NIOS2 specific section flags to bfd internal section flags.  */
 
 static bfd_boolean
-nios2_elf32_section_flags (flagword *flags, Elf_Internal_Shdr *hdr)
+nios2_elf32_section_flags (flagword *flags, const Elf_Internal_Shdr *hdr)
 {
   if (hdr->sh_flags & SHF_NIOS2_GPREL)
     *flags |= SEC_SMALL_DATA;
@@ -2074,14 +2078,14 @@ nios2_elf32_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	  /* This relocation describes the C++ object vtable hierarchy.
 	     Reconstruct it for later use during GC.  */
 	case R_NIOS2_GNU_VTINHERIT:
-	  if (!_bfd_elf32_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
+	  if (!bfd_elf_gc_record_vtinherit (abfd, sec, h, rel->r_offset))
 	    return FALSE;
 	  break;
 
 	  /* This relocation describes which C++ vtable entries are actually
 	     used.  Record for later use during GC.  */
 	case R_NIOS2_GNU_VTENTRY:
-	  if (!_bfd_elf32_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    return FALSE;
 	  break;
 	}
