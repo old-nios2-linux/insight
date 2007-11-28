@@ -156,7 +156,7 @@ int baud_rate = -1;
    As remote.c is used much more than remote-e7000.c, it was changed 
    back to 2 seconds in 1999. */
 
-int remote_timeout = 20;
+int remote_timeout = 2;
 
 /* Non-zero tells remote* modules to output debugging info.  */
 

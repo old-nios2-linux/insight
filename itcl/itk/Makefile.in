@@ -266,7 +266,7 @@ install-binaries: binaries install-lib-binaries install-bin-binaries
 # This rule installs platform-independent files, such as header files.
 #========================================================================
 
-install-libraries: libraries installdirs
+install-libraries: libraries
 	$(mkinstalldirs) $(includedir)
 	@echo "Installing header files in $(includedir)"
 	@for i in $(GENERIC_HDRS) ; do \
@@ -274,7 +274,7 @@ install-libraries: libraries installdirs
 	    $(INSTALL_DATA) $$i $(includedir) ; \
 	done;
 	@echo "Installing library files in $(ITK_LIBRARY)"
-	for i in $(srcdir)/library/*.* $(srcdir)/library/tclIndex ; do \
+	@for i in $(srcdir)/library/*.* $(srcdir)/library/tclIndex ; do \
 	    echo "Installing $$i" ; \
 	    $(INSTALL_DATA) $$i $(ITK_LIBRARY) ; \
 	done;
@@ -284,7 +284,7 @@ install-libraries: libraries installdirs
 # directory.
 #========================================================================
 
-install-doc: doc installdirs
+install-doc: doc
 	$(mkinstalldirs) $(mandir)/mann
 	@echo "Installing man pages in $(mandir)"
 	@for i in $(srcdir)/doc/*.n; \

@@ -793,7 +793,6 @@ varobj_set_value (struct varobj *var, char *expression)
   struct value *value;
   int saved_input_radix = input_radix;
 
-  // PBrookes - edit!!!!
   if (var->value != NULL && variable_editable (var) && !var->error)
     {
       char *s = expression;
@@ -878,7 +877,7 @@ varobj_update (struct varobj **varp, struct varobj ***changelist)
   int type_changed;
   int i;
   int vleft;
-  int error2 = 0;
+  int error2;
   struct varobj *v;
   struct varobj **cv;
   struct varobj **templist = NULL;

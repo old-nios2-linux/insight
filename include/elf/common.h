@@ -1,6 +1,6 @@
 /* ELF support for BFD.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004
+   2001, 2002, 2003
    Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
@@ -180,9 +180,7 @@
 #define EM_ARC_A5	 93	/* ARC Cores Tangent-A5 */
 #define EM_XTENSA	 94	/* Tensilica Xtensa Architecture */
 #define EM_IP2K		101	/* Ubicom IP2022 micro controller */
-#define EM_CR		103	/* National Semiconductor CompactRISC */
 #define EM_MSP430	105	/* TI msp430 micro controller */
-#define EM_CRX		114	/* National Semiconductor CRX */
 #define EM_ALTERA_NIOS2	113 /* Altera Nios II soft-core processor */
 
 /* If it is necessary to assign new unofficial EM_* values, please pick large

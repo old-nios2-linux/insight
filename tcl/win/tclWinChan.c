@@ -1106,7 +1106,7 @@ Tcl_MakeFileChannel(rawHandle, mode)
 }
 #ifdef HAVE_NO_SEH
 static
-__attribute__ ((cdecl)) __attribute__ ((used))
+__attribute__ ((cdecl))
 EXCEPTION_DISPOSITION
 _except_makefilechannel_handler(
     struct _EXCEPTION_RECORD *ExceptionRecord,

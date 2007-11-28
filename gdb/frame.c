@@ -133,7 +133,7 @@ static int frame_debug;
 
 /* Flag to indicate whether backtraces should stop at main et.al.  */
 
-static int backtrace_past_main = 1;
+static int backtrace_past_main;
 static unsigned int backtrace_limit = UINT_MAX;
 
 

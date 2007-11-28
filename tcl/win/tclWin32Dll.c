@@ -38,8 +38,8 @@ static HINSTANCE hInstance;	/* HINSTANCE of this DLL. */
 static int platformId;		/* Running under NT, or 95/98? */
 
 #ifdef HAVE_NO_SEH
-static void *ESP __attribute__ ((used));
-static void *EBP __attribute__ ((used));
+static void *ESP;
+static void *EBP;
 #endif /* HAVE_NO_SEH */
 
 /*
@@ -393,7 +393,7 @@ TclpCheckStackSpace()
 }
 #ifdef HAVE_NO_SEH
 static
-__attribute__ ((cdecl)) __attribute__ ((used))
+__attribute__ ((cdecl))
 EXCEPTION_DISPOSITION
 _except_checkstackspace_handler(
     struct _EXCEPTION_RECORD *ExceptionRecord,
