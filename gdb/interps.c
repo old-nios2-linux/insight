@@ -1,6 +1,6 @@
 /* Manages interpreters for GDB, the GNU debugger.
 
-   Copyright 2000, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 2000, 2002, 2003 Free Software Foundation, Inc.
 
    Written by Jim Ingham <jingham@apple.com> of Apple Computer, Inc.
 
@@ -18,8 +18,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330,
-   Boston, MA 02111-1307, USA. */
+   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA. */
 
 /* This is just a first cut at separating out the "interpreter"
    functions of gdb into self-contained modules.  There are a couple
@@ -424,10 +424,11 @@ interpreter_completer (char *text, char *word)
   struct interp *interp;
 
   /* We expect only a very limited number of interpreters, so just
-     allocate room for all of them. */
+     allocate room for all of them plus one for the last that must be NULL
+     to correctly end the list. */
   for (interp = interp_list; interp != NULL; interp = interp->next)
     ++alloced;
-  matches = (char **) xmalloc (alloced * sizeof (char *));
+  matches = (char **) xcalloc (alloced + 1, sizeof (char *));
 
   num_matches = 0;
   textlen = strlen (text);
@@ -459,12 +460,6 @@ interpreter_completer (char *text, char *word)
     {
       xfree (matches);
       matches = NULL;
-    }
-  else if (num_matches < alloced)
-    {
-      matches = (char **) xrealloc ((char *) matches, ((num_matches + 1)
-						       * sizeof (char *)));
-      matches[num_matches] = NULL;
     }
 
   return matches;
