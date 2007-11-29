@@ -104,7 +104,9 @@
    reduce the time taken to read a single byte, but reduce overall
    throughput.  */
 
-#define LINE_SIZE_POWER (5)
+/* ALTERA: our remote target reads and writes blocks of 256 bytes most efficiently */
+
+#define LINE_SIZE_POWER (8)
 #define LINE_SIZE (1 << LINE_SIZE_POWER)
 
 /* Each cache block holds LINE_SIZE bytes of data

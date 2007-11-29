@@ -215,6 +215,10 @@ struct remote_state
      (making an array of NUM_REGS + NUM_PSEUDO_REGS in size).  */
   struct packet_reg *regs;
 
+  /* This is the value returned by the target in response to the
+     maxpacket query. */
+  long maxpacket_query_response;
+
   /* This is the size (in chars) of the first response to the ``g''
      packet.  It is used as a heuristic when determining the maximum
      size of memory-read and memory-write packets.  A target will
@@ -271,6 +275,9 @@ init_remote_state (struct gdbarch *gdbarch)
       if (regnum < NUM_REGS)
 	rs->sizeof_g_packet += register_size (current_gdbarch, regnum);
     }
+
+  /* We don't know this yet. */
+  rs->maxpacket_query_response = 0;
 
   /* Default maximum number of characters in a packet body. Many
      remote stubs have a hardwired buffer size of 400 bytes
@@ -433,6 +440,11 @@ get_memory_packet_size (struct memory_packet_config *config)
 	what_they_get = MAX_REMOTE_PACKET_SIZE;
       else
 	what_they_get = config->size;
+    }
+    /* If the target has told us its maximum size then use that value. */
+  else if (rs->maxpacket_query_response > 0)
+    {
+      what_they_get = rs->maxpacket_query_response;
     }
   else
     {
@@ -2031,6 +2043,9 @@ remote_open_1 (char *name, int from_tty, struct target_ops *target,
 	       int extended_p, int async_p)
 {
   struct remote_state *rs = get_remote_state ();
+  char *buf;
+  int maxpacket;
+
   if (name == 0)
     error (_("To open a remote debug connection, you need to specify what\n"
 	   "serial device is attached to the remote system\n"
@@ -2078,6 +2093,20 @@ remote_open_1 (char *name, int from_tty, struct target_ops *target,
       puts_filtered ("\n");
     }
   push_target (target);		/* Switch to using remote target now.  */
+
+  buf = alloca (rs->remote_packet_size);
+
+  /* Ask the remote what its maximum packet size is.  The value returned
+     includes $# and checksum, but does not include space for a terminating 0
+     which we sometimes add locally.  */
+  putpkt ("qmaxpacket");
+  getpkt (buf, (rs->remote_packet_size), 0);
+  maxpacket = atoi(buf);
+  if (maxpacket > 0)
+  {
+    rs->maxpacket_query_response = maxpacket;
+    rs->remote_packet_size = maxpacket;
+  }
 
   init_all_packet_configs ();
 

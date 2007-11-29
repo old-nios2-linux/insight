@@ -78,6 +78,7 @@
 #define ARCH_xtensa
 #define ARCH_z80
 #define ARCH_z8k
+#define ARCH_nios2
 #define INCLUDE_SHMEDIA
 #endif
 
@@ -408,6 +409,14 @@ disassembler (abfd)
     case bfd_arch_iq2000:
       disassemble = print_insn_iq2000;
       break;
+#endif
+#ifdef ARCH_nios2
+	case bfd_arch_nios2:
+      if (bfd_big_endian (abfd))
+	disassemble = print_insn_big_nios2;
+      else
+	disassemble = print_insn_little_nios2;
+	  break;
 #endif
 #ifdef ARCH_m32c
     case bfd_arch_m32c:

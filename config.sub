@@ -270,7 +270,7 @@ case $basic_machine in
 	| mn10200 | mn10300 \
 	| mt \
 	| msp430 \
-	| nios | nios2 \
+	| nios2 | nios2eb | nios2el \
 	| ns16k | ns32k \
 	| or32 \
 	| pdp10 | pdp11 | pj | pjl \

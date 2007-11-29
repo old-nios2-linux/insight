@@ -588,6 +588,7 @@ libiberty_h =	$(INCLUDE_DIR)/libiberty.h
 libbfd_h =	$(BFD_SRC)/libbfd.h
 remote_sim_h =	$(INCLUDE_DIR)/gdb/remote-sim.h
 demangle_h =    $(INCLUDE_DIR)/demangle.h
+nios2_h =          $(INCLUDE_DIR)/opcode/nios2.h
 obstack_h =     $(INCLUDE_DIR)/obstack.h
 opcode_m68hc11_h = $(INCLUDE_DIR)/opcode/m68hc11.h
 readline_h = 	$(READLINE_SRC)/readline.h
@@ -2357,6 +2358,7 @@ ms1-tdep.o: ms1-tdep.c $(defs_h) $(frame_h) $(frame_unwind_h) $(frame_base_h) \
 	$(trad_frame_h) $(inferior_h) $(dwarf2_frame_h) $(infcall_h) \
 	$(gdb_assert_h)
 nbsd-tdep.o: nbsd-tdep.c $(defs_h) $(gdb_string_h) $(solib_svr4_h)
+nios2-tdep.o: nios2-tdep.c $(defs_h) $(symtab_h) $(frame_h) $(nios2_h)
 nlmread.o: nlmread.c $(defs_h) $(bfd_h) $(symtab_h) $(symfile_h) \
 	$(objfiles_h) $(buildsym_h) $(stabsread_h) $(block_h)
 nto-procfs.o: nto-procfs.c $(defs_h) $(gdb_dirent_h) $(exceptions_h) \

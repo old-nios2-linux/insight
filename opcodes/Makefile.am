@@ -145,6 +145,13 @@ CFILES = \
 	mt-dis.c \
 	mt-ibld.c \
 	mt-opc.c \
+	nios2-opc.c \
+	nios2-dis.c \
+	ms1-asm.c \
+	ms1-desc.c \
+	ms1-dis.c \
+	ms1-ibld.c \
+	ms1-opc.c \
 	ns32k-dis.c \
 	openrisc-asm.c \
 	openrisc-desc.c \
@@ -277,6 +284,8 @@ ALL_MACHINES = \
 	mt-dis.lo \
 	mt-ibld.lo \
 	mt-opc.lo \
+	nios2-opc.lo \
+	nios2-dis.lo \
 	ns32k-dis.lo \
 	openrisc-asm.lo \
 	openrisc-desc.lo \
@@ -890,6 +899,13 @@ mt-opc.lo: mt-opc.c sysdep.h config.h $(INCDIR)/ansidecl.h \
   $(BFD_H) $(INCDIR)/symcat.h mt-desc.h $(INCDIR)/opcode/cgen-bitset.h \
   $(INCDIR)/opcode/cgen.h mt-opc.h $(INCDIR)/libiberty.h \
   $(INCDIR)/safe-ctype.h
+nios2-opc.lo: nios2-opc.c sysdep.h config.h $(INCDIR)/ansidecl.h \
+  $(INCDIR)/opcode/nios2.h
+nios2-dis.lo: nios2-dis.c sysdep.h config.h $(INCDIR)/ansidecl.h \
+  $(INCDIR)/dis-asm.h $(BFD_H) $(INCDIR)/symcat.h $(INCDIR)/opcode/nios2.h \
+  opintl.h $(BFDDIR)/elf-bfd.h $(INCDIR)/elf/common.h \
+  $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h $(INCDIR)/bfdlink.h \
+  $(INCDIR)/elf/nios2.h $(INCDIR)/elf/reloc-macros.h
 ns32k-dis.lo: ns32k-dis.c $(BFD_H) $(INCDIR)/ansidecl.h \
   $(INCDIR)/symcat.h sysdep.h config.h $(INCDIR)/dis-asm.h \
   $(INCDIR)/opcode/ns32k.h opintl.h
