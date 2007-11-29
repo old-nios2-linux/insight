@@ -2010,6 +2010,8 @@ enum bfd_architecture
    bfd_arch_maxq,     /* Dallas MAXQ 10/20 */
 #define bfd_mach_maxq10    10
 #define bfd_mach_maxq20    20
+  bfd_arch_nios2,
+#define bfd_mach_nios2		   1
   bfd_arch_z80,
 #define bfd_mach_z80strict      1 /* No undocumented opcodes.  */
 #define bfd_mach_z80            3 /* With ixl, ixh, iyl, and iyh.  */
@@ -4270,6 +4272,23 @@ assembler-expanded instructions.  This is commonly used
 internally by the linker after analysis of a
 BFD_RELOC_XTENSA_ASM_EXPAND.  */
   BFD_RELOC_XTENSA_ASM_SIMPLIFY,
+
+/* Relocations used by the Altera New Jersey core  */
+  BFD_RELOC_NIOS2_S16,
+  BFD_RELOC_NIOS2_U16,
+  BFD_RELOC_NIOS2_CALL26,
+  BFD_RELOC_NIOS2_IMM5,
+  BFD_RELOC_NIOS2_CACHE_OPX,
+  BFD_RELOC_NIOS2_IMM6,
+  BFD_RELOC_NIOS2_IMM8,
+  BFD_RELOC_NIOS2_HI16,
+  BFD_RELOC_NIOS2_LO16,
+  BFD_RELOC_NIOS2_HIADJ16,
+  BFD_RELOC_NIOS2_GPREL,
+  BFD_RELOC_NIOS2_UJMP,
+  BFD_RELOC_NIOS2_CJMP,
+  BFD_RELOC_NIOS2_CALLR,
+  BFD_RELOC_NIOS2_ALIGN,
 
 /* 8 bit signed offset in (ix+d) or (iy+d).  */
   BFD_RELOC_Z80_DISP8,

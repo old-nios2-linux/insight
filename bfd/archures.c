@@ -381,6 +381,8 @@ DESCRIPTION
 .   bfd_arch_maxq,     {* Dallas MAXQ 10/20 *}
 .#define bfd_mach_maxq10    10
 .#define bfd_mach_maxq20    20
+.  bfd_arch_nios2,
+.#define bfd_mach_nios2 1
 .  bfd_arch_z80,
 .#define bfd_mach_z80strict      1 {* No undocumented opcodes.  *}
 .#define bfd_mach_z80            3 {* With ixl, ixh, iyl, and iyh.  *}
@@ -462,6 +464,7 @@ extern const bfd_arch_info_type bfd_mn10300_arch;
 extern const bfd_arch_info_type bfd_msp430_arch;
 extern const bfd_arch_info_type bfd_mt_arch;
 extern const bfd_arch_info_type bfd_ns32k_arch;
+extern const bfd_arch_info_type bfd_nios2_arch;
 extern const bfd_arch_info_type bfd_openrisc_arch;
 extern const bfd_arch_info_type bfd_or32_arch;
 extern const bfd_arch_info_type bfd_pdp11_arch;
@@ -530,6 +533,7 @@ static const bfd_arch_info_type * const bfd_archures_list[] =
     &bfd_mn10300_arch,
     &bfd_mt_arch,
     &bfd_msp430_arch,
+    &bfd_nios2_arch,
     &bfd_ns32k_arch,
     &bfd_openrisc_arch,
     &bfd_or32_arch,
