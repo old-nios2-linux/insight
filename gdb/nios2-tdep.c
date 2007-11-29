@@ -252,6 +252,14 @@ nios2_register_name (int regno)
   return nios2_register_info_table[regno].name;
 }
 
+/* Returns the default type for register N.  */
+static struct type *
+nios2_register_type (struct gdbarch *gdbarch, int regno)
+{
+/* FIXME Do we need some checks on regno ? */
+  return *nios2_register_info_table[regno].type;
+}
+
 /* nios2_register_byte_table[i] is the offset into the register file of the
    start of register number i.  We initialize this from
    nios2_register_info_table.  */
@@ -1391,15 +1399,14 @@ nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   struct gdbarch *gdbarch;
   int register_bytes, i;
 
-  /* Find a candidate among the list of pre-declared architectures. */
-  arches = gdbarch_list_lookup_by_info (arches, &info);
-  if (arches != NULL)
-    return arches->gdbarch;
+  /* Change the register names based on the current machine type.  */
+  if (info.bfd_arch_info->arch != bfd_arch_nios2)
+    return NULL;
 
   /* None found, create a new architecture from the information
      provided.  We don't have any architecture specific state, so just
      pass in 0 for the struct gdbarch_tdep parameter.  */
-  gdbarch = gdbarch_alloc (&info, (struct gdbarch_tdep *)0);
+  gdbarch = gdbarch_alloc (&info, NULL);
 
   /* Data type sizes.  */
   set_gdbarch_ptr_bit (gdbarch, 32);
@@ -1438,10 +1445,13 @@ nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Length of ordinary registers used in push_word and a few other
      places.  DEPRECATED_REGISTER_RAW_SIZE is the real way to know how
      big a register is.  */
+/* FIXME
   set_gdbarch_deprecated_register_size (gdbarch, 4);
   set_gdbarch_deprecated_register_virtual_type (gdbarch, 
     nios2_register_virtual_type);
+*/
 
+  set_gdbarch_register_type (gdbarch, nios2_register_type);
 
    /* The "default" register numbering scheme for AMD64 is referred to
    as the "DWARF Register Number Mapping" in the System V psABI.
@@ -1459,7 +1469,9 @@ nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_frame_align (gdbarch, nios2_frame_align); 
 
  /* Some registers require conversion from raw format to virtual format.  */
+/* FIXME
   set_gdbarch_deprecated_register_convertible (gdbarch, nios2_register_convertible);
+*/
  
   set_gdbarch_convert_register_p (gdbarch, nios2_convert_register_p); 
   set_gdbarch_register_to_value (gdbarch, nios2_register_to_value); 
@@ -1480,7 +1492,9 @@ nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* FIXME: PBrookes - copied from AMD64-TDEP.c (kettenis/20021026): 
      This is ELF-specific.  Fine for now, since all supported NIOS II 
      targets are ELF, but that might change in the future.  */
+/* FIXME again.. Does not exist anymore...
   set_gdbarch_in_solib_call_trampoline (gdbarch, in_plt_section); 
+*/
 
   frame_unwind_append_sniffer (gdbarch, nios2_frame_sniffer); 
 
