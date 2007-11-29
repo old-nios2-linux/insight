@@ -21,6 +21,7 @@ m68*)			gdb_target_cpu=m68k ;;
 m88*)			gdb_target_cpu=m88k ;;
 mips*)			gdb_target_cpu=mips ;;
 ms1*)			gdb_target_cpu=ms1 ;;
+nios2*)                 gdb_target_cpu=nios2 ;;
 powerpc*)		gdb_target_cpu=powerpc ;;
 sparc*)			gdb_target_cpu=sparc ;;
 thumb*)			gdb_target_cpu=arm ;;
@@ -146,6 +147,8 @@ mips*-*-*)		gdb_target=embed ;;
 mn10300-*-*)		gdb_target=mn10300 ;;
 
 ms1-*-*)		gdb_target=ms1 ;;
+
+nios2*-*-*)             gdb_target=nios2 ;;
 
 powerpc-*-netbsd* | powerpc-*-knetbsd*-gnu)
 			gdb_target=nbsd ;;

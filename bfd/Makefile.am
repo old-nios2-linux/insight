@@ -88,6 +88,7 @@ ALL_MACHINES = \
 	cpu-maxq.lo \
 	cpu-mcore.lo \
 	cpu-mips.lo \
+	cpu-nios2.lo \
 	cpu-mmix.lo \
 	cpu-ms1.lo \
 	cpu-msp430.lo \
@@ -149,6 +150,7 @@ ALL_MACHINES_CFILES = \
 	cpu-maxq.c \
 	cpu-mcore.c \
 	cpu-mips.c \
+	cpu-nios2.c \
 	cpu-mmix.c \
 	cpu-ms1.c \
 	cpu-msp430.c \
@@ -260,6 +262,7 @@ BFD32_BACKENDS = \
 	elf32-mips.lo \
 	elf32-ms1.lo \
 	elf32-msp430.lo \
+	elf32-nios2.lo \
 	elf32-openrisc.lo \
 	elf32-or32.lo \
 	elf32-pj.lo \
@@ -431,6 +434,7 @@ BFD32_BACKENDS_CFILES = \
 	elf32-mips.c \
 	elf32-ms1.c \
 	elf32-msp430.c \
+	elf32-nios2.c \
 	elf32-openrisc.c \
 	elf32-or32.c \
 	elf32-pj.c \
@@ -1003,6 +1007,7 @@ cpu-m10300.lo: cpu-m10300.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-maxq.lo: cpu-maxq.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-mcore.lo: cpu-mcore.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-mips.lo: cpu-mips.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
+cpu-nios2.lo: cpu-nios2.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-mmix.lo: cpu-mmix.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-ms1.lo: cpu-ms1.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
 cpu-msp430.lo: cpu-msp430.c $(INCDIR)/filenames.h $(INCDIR)/hashtab.h
@@ -1360,6 +1365,10 @@ elf32-msp430.lo: elf32-msp430.c $(INCDIR)/filenames.h \
   $(INCDIR)/elf/common.h $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h \
   $(INCDIR)/bfdlink.h $(INCDIR)/elf/msp430.h $(INCDIR)/elf/reloc-macros.h \
   elf32-target.h
+elf32-nios2.lo: elf32-nios2.c $(INCDIR)/filenames.h $(INCDIR)/bfdlink.h \
+  genlink.h elf-bfd.h $(INCDIR)/elf/common.h $(INCDIR)/elf/internal.h \
+  $(INCDIR)/elf/external.h $(INCDIR)/elf/nios2.h \
+  $(INCDIR)/elf/reloc-macros.h elf32-target.h
 elf32-openrisc.lo: elf32-openrisc.c $(INCDIR)/filenames.h \
   $(INCDIR)/hashtab.h elf-bfd.h $(INCDIR)/elf/common.h \
   $(INCDIR)/elf/internal.h $(INCDIR)/elf/external.h $(INCDIR)/bfdlink.h \
