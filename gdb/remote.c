@@ -271,10 +271,6 @@ struct remote_arch_state
      (making an array of NUM_REGS + NUM_PSEUDO_REGS in size).  */
   struct packet_reg *regs;
 
-  /* This is the value returned by the target in response to the
-     maxpacket query. */
-  long maxpacket_query_response;
-
   /* This is the size (in chars) of the first response to the ``g''
      packet.  It is used as a heuristic when determining the maximum
      size of memory-read and memory-write packets.  A target will
@@ -340,9 +336,6 @@ init_remote_state (struct gdbarch *gdbarch)
       if (regnum < NUM_REGS)
 	rsa->sizeof_g_packet += register_size (current_gdbarch, regnum);
     }
-
-  /* We don't know this yet. */
-  rs->maxpacket_query_response = 0;
 
   /* Default maximum number of characters in a packet body. Many
      remote stubs have a hardwired buffer size of 400 bytes
@@ -522,11 +515,6 @@ get_memory_packet_size (struct memory_packet_config *config)
 	what_they_get = MAX_REMOTE_PACKET_SIZE;
       else
 	what_they_get = config->size;
-    }
-    /* If the target has told us its maximum size then use that value. */
-  else if (rs->maxpacket_query_response > 0)
-    {
-      what_they_get = rs->maxpacket_query_response;
     }
   else
     {
