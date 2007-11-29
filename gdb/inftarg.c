@@ -1,7 +1,7 @@
 /* Target-vector operations for controlling Unix child processes, for GDB.
 
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
-   2000, 2002, 2003, 2004 Free Software Foundation, Inc.
+   2000, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -34,7 +34,7 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <fcntl.h>
-
+#include "observer.h"
 #include "gdb_wait.h"
 #include "inflow.h"
 
@@ -53,10 +53,6 @@ static void child_prepare_to_store (void);
 static ptid_t child_wait (ptid_t, struct target_waitstatus *);
 #endif /* CHILD_WAIT */
 
-#if !defined(CHILD_POST_WAIT)
-void child_post_wait (ptid_t, int);
-#endif
-
 static void child_open (char *, int);
 
 static void child_files_info (struct target_ops *);
@@ -73,7 +69,7 @@ static void ptrace_me (void);
 
 static void ptrace_him (int);
 
-static void child_create_inferior (char *, char *, char **);
+static void child_create_inferior (char *, char *, char **, int);
 
 static void child_mourn_inferior (void);
 
@@ -88,8 +84,6 @@ int child_thread_alive (ptid_t);
 static void init_child_ops (void);
 
 extern char **environ;
-
-struct target_ops child_ops;
 
 int child_suppress_run = 0;	/* Non-zero if inftarg should pretend not to
 				   be a runnable target.  Used by targets
@@ -119,7 +113,7 @@ child_wait (ptid_t ptid, struct target_waitstatus *ourstatus)
 				   attached process. */
       set_sigio_trap ();
 
-      pid = ptrace_wait (inferior_ptid, &status);
+      pid = wait (&status);
 
       save_errno = errno;
 
@@ -161,17 +155,6 @@ child_wait (ptid_t ptid, struct target_waitstatus *ourstatus)
 }
 #endif /* CHILD_WAIT */
 
-#if !defined(CHILD_POST_WAIT)
-void
-child_post_wait (ptid_t ptid, int wait_status)
-{
-  /* This version of Unix doesn't require a meaningful "post wait"
-     operation.
-   */
-}
-#endif
-
-
 #ifndef CHILD_THREAD_ALIVE
 
 /* Check to see if the given thread is alive.
@@ -194,46 +177,44 @@ child_thread_alive (ptid_t ptid)
 static void
 child_attach (char *args, int from_tty)
 {
+  char *exec_file;
+  int pid;
+  char *dummy;
+
   if (!args)
-    error_no_arg ("process-id to attach");
+    error_no_arg (_("process-id to attach"));
 
-#ifndef ATTACH_DETACH
-  error ("Can't attach to a process on this machine.");
-#else
-  {
-    char *exec_file;
-    int pid;
-    char *dummy;
+  dummy = args;
+  pid = strtol (args, &dummy, 0);
+  /* Some targets don't set errno on errors, grrr! */
+  if ((pid == 0) && (args == dummy))
+      error (_("Illegal process-id: %s."), args);
+  
+  if (pid == getpid ())	/* Trying to masturbate? */
+    error (_("I refuse to debug myself!"));
+  
+  if (from_tty)
+    {
+      exec_file = (char *) get_exec_file (0);
+      
+      if (exec_file)
+	printf_unfiltered (_("Attaching to program: %s, %s\n"), exec_file,
+			   target_pid_to_str (pid_to_ptid (pid)));
+      else
+	printf_unfiltered (_("Attaching to %s\n"),
+			   target_pid_to_str (pid_to_ptid (pid)));
+      
+      gdb_flush (gdb_stdout);
+    }
 
-    dummy = args;
-    pid = strtol (args, &dummy, 0);
-    /* Some targets don't set errno on errors, grrr! */
-    if ((pid == 0) && (args == dummy))
-      error ("Illegal process-id: %s\n", args);
+  attach (pid);
+  
+  inferior_ptid = pid_to_ptid (pid);
+  push_target (&deprecated_child_ops);
 
-    if (pid == getpid ())	/* Trying to masturbate? */
-      error ("I refuse to debug myself!");
-
-    if (from_tty)
-      {
-	exec_file = (char *) get_exec_file (0);
-
-	if (exec_file)
-	  printf_unfiltered ("Attaching to program: %s, %s\n", exec_file,
-			     target_pid_to_str (pid_to_ptid (pid)));
-	else
-	  printf_unfiltered ("Attaching to %s\n",
-	                     target_pid_to_str (pid_to_ptid (pid)));
-
-	gdb_flush (gdb_stdout);
-      }
-
-    attach (pid);
-
-    inferior_ptid = pid_to_ptid (pid);
-    push_target (&child_ops);
-  }
-#endif /* ATTACH_DETACH */
+  /* Do this first, before anything has had a chance to query the
+     inferior's symbol table or similar.  */
+  observer_notify_inferior_created (&current_target, from_tty);
 }
 
 #if !defined(CHILD_POST_ATTACH)
@@ -256,31 +237,25 @@ child_post_attach (int pid)
 static void
 child_detach (char *args, int from_tty)
 {
-#ifdef ATTACH_DETACH
-  {
-    int siggnal = 0;
-    int pid = PIDGET (inferior_ptid);
-
-    if (from_tty)
-      {
-	char *exec_file = get_exec_file (0);
-	if (exec_file == 0)
-	  exec_file = "";
-	printf_unfiltered ("Detaching from program: %s, %s\n", exec_file,
-			   target_pid_to_str (pid_to_ptid (pid)));
-	gdb_flush (gdb_stdout);
-      }
-    if (args)
-      siggnal = atoi (args);
-
-    detach (siggnal);
-
-    inferior_ptid = null_ptid;
-    unpush_target (&child_ops);
-  }
-#else
-  error ("This version of Unix does not support detaching a process.");
-#endif
+  int siggnal = 0;
+  int pid = PIDGET (inferior_ptid);
+  
+  if (from_tty)
+    {
+      char *exec_file = get_exec_file (0);
+      if (exec_file == 0)
+	exec_file = "";
+      printf_unfiltered (_("Detaching from program: %s, %s\n"), exec_file,
+			 target_pid_to_str (pid_to_ptid (pid)));
+      gdb_flush (gdb_stdout);
+    }
+  if (args)
+    siggnal = atoi (args);
+  
+  detach (siggnal);
+  
+  inferior_ptid = null_ptid;
+  unpush_target (&deprecated_child_ops);
 }
 
 /* Get ready to modify the registers array.  On machines which store
@@ -302,14 +277,14 @@ child_prepare_to_store (void)
 static void
 child_files_info (struct target_ops *ignore)
 {
-  printf_unfiltered ("\tUsing the running image of %s %s.\n",
+  printf_unfiltered (_("\tUsing the running image of %s %s.\n"),
       attach_flag ? "attached" : "child", target_pid_to_str (inferior_ptid));
 }
 
 static void
 child_open (char *arg, int from_tty)
 {
-  error ("Use the \"run\" command to start a Unix child process.");
+  error (_("Use the \"run\" command to start a Unix child process."));
 }
 
 /* Stub function which causes the inferior that runs it, to be ptrace-able
@@ -319,7 +294,7 @@ static void
 ptrace_me (void)
 {
   /* "Trace me, Dr. Memory!" */
-  call_ptrace (0, 0, (PTRACE_ARG3_TYPE) 0, 0);
+  call_ptrace (0, 0, (PTRACE_TYPE_ARG3) 0, 0);
 }
 
 /* Stub function which causes the GDB that runs it, to start ptrace-ing
@@ -328,7 +303,7 @@ ptrace_me (void)
 static void
 ptrace_him (int pid)
 {
-  push_target (&child_ops);
+  push_target (&deprecated_child_ops);
 
   /* On some targets, there must be some explicit synchronization
      between the parent and child processes after the debugger
@@ -356,14 +331,13 @@ ptrace_him (int pid)
    ENV is the environment vector to pass.  Errors reported with error().  */
 
 static void
-child_create_inferior (char *exec_file, char *allargs, char **env)
+child_create_inferior (char *exec_file, char *allargs, char **env,
+		       int from_tty)
 {
-#ifdef HPUXHPPA
-  fork_inferior (exec_file, allargs, env, ptrace_me, ptrace_him, pre_fork_inferior, NULL);
-#else
   fork_inferior (exec_file, allargs, env, ptrace_me, ptrace_him, NULL, NULL);
-#endif
+
   /* We are at the first instruction we care about.  */
+  observer_notify_inferior_created (&current_target, from_tty);
   /* Pedal to the metal... */
   proceed ((CORE_ADDR) -1, TARGET_SIGNAL_0, 0);
 }
@@ -390,11 +364,11 @@ child_acknowledge_created_inferior (int pid)
 
 
 #if !defined(CHILD_INSERT_FORK_CATCHPOINT)
-int
+void
 child_insert_fork_catchpoint (int pid)
 {
-  /* This version of Unix doesn't support notification of fork events.  */
-  return 0;
+  /* This version of Unix doesn't support notification of fork
+     events.  */
 }
 #endif
 
@@ -408,11 +382,11 @@ child_remove_fork_catchpoint (int pid)
 #endif
 
 #if !defined(CHILD_INSERT_VFORK_CATCHPOINT)
-int
+void
 child_insert_vfork_catchpoint (int pid)
 {
-  /* This version of Unix doesn't support notification of vfork events.  */
-  return 0;
+  /* This version of Unix doesn't support notification of vfork
+     events.  */
 }
 #endif
 
@@ -427,7 +401,7 @@ child_remove_vfork_catchpoint (int pid)
 
 #if !defined(CHILD_FOLLOW_FORK)
 int
-child_follow_fork (int follow_child)
+child_follow_fork (struct target_ops *ops, int follow_child)
 {
   /* This version of Unix doesn't support following fork or vfork events.  */
   return 0;
@@ -435,11 +409,11 @@ child_follow_fork (int follow_child)
 #endif
 
 #if !defined(CHILD_INSERT_EXEC_CATCHPOINT)
-int
+void
 child_insert_exec_catchpoint (int pid)
 {
-  /* This version of Unix doesn't support notification of exec events.  */
-  return 0;
+  /* This version of Unix doesn't support notification of exec
+     events.  */
 }
 #endif
 
@@ -489,7 +463,7 @@ child_has_exited (int pid, int wait_status, int *exit_status)
 static void
 child_mourn_inferior (void)
 {
-  unpush_target (&child_ops);
+  unpush_target (&deprecated_child_ops);
   generic_mourn_inferior ();
 }
 
@@ -557,8 +531,8 @@ child_core_file_to_sym_file (char *core)
 
 static LONGEST
 child_xfer_partial (struct target_ops *ops, enum target_object object,
-		    const char *annex, void *readbuf,
-		    const void *writebuf, ULONGEST offset, LONGEST len)
+		    const char *annex, gdb_byte *readbuf,
+		    const gdb_byte *writebuf, ULONGEST offset, LONGEST len)
 {
   switch (object)
     {
@@ -567,7 +541,7 @@ child_xfer_partial (struct target_ops *ops, enum target_object object,
 	return child_xfer_memory (offset, readbuf, len, 0/*write*/,
 				  NULL, ops);
       if (writebuf)
-	return child_xfer_memory (offset, readbuf, len, 1/*write*/,
+	return child_xfer_memory (offset, (void *) writebuf, len, 1/*write*/,
 				  NULL, ops);
       return -1;
 
@@ -585,13 +559,6 @@ child_xfer_partial (struct target_ops *ops, enum target_object object,
       return NATIVE_XFER_AUXV (ops, object, annex, readbuf, writebuf,
 			       offset, len);
 
-    case TARGET_OBJECT_WCOOKIE:
-#ifndef NATIVE_XFER_WCOOKIE
-#define NATIVE_XFER_WCOOKIE(OPS,OBJECT,ANNEX,WRITEBUF,READBUF,OFFSET,LEN) (-1)
-#endif
-      return NATIVE_XFER_WCOOKIE (ops, object, annex, readbuf, writebuf,
-				  offset, len);
-
     default:
       return -1;
     }
@@ -608,76 +575,57 @@ child_pid_to_str (ptid_t ptid)
 static void
 init_child_ops (void)
 {
-  child_ops.to_shortname = "child";
-  child_ops.to_longname = "Unix child process";
-  child_ops.to_doc = "Unix child process (started by the \"run\" command).";
-  child_ops.to_open = child_open;
-  child_ops.to_attach = child_attach;
-  child_ops.to_post_attach = child_post_attach;
-  child_ops.to_detach = child_detach;
-  child_ops.to_resume = child_resume;
-  child_ops.to_wait = child_wait;
-  child_ops.to_post_wait = child_post_wait;
-  child_ops.to_fetch_registers = fetch_inferior_registers;
-  child_ops.to_store_registers = store_inferior_registers;
-  child_ops.to_prepare_to_store = child_prepare_to_store;
-  child_ops.to_xfer_memory = child_xfer_memory;
-  child_ops.to_xfer_partial = child_xfer_partial;
-  child_ops.to_files_info = child_files_info;
-  child_ops.to_insert_breakpoint = memory_insert_breakpoint;
-  child_ops.to_remove_breakpoint = memory_remove_breakpoint;
-  child_ops.to_terminal_init = terminal_init_inferior;
-  child_ops.to_terminal_inferior = terminal_inferior;
-  child_ops.to_terminal_ours_for_output = terminal_ours_for_output;
-  child_ops.to_terminal_save_ours = terminal_save_ours;
-  child_ops.to_terminal_ours = terminal_ours;
-  child_ops.to_terminal_info = child_terminal_info;
-  child_ops.to_kill = kill_inferior;
-  child_ops.to_create_inferior = child_create_inferior;
-  child_ops.to_post_startup_inferior = child_post_startup_inferior;
-  child_ops.to_acknowledge_created_inferior = child_acknowledge_created_inferior;
-  child_ops.to_insert_fork_catchpoint = child_insert_fork_catchpoint;
-  child_ops.to_remove_fork_catchpoint = child_remove_fork_catchpoint;
-  child_ops.to_insert_vfork_catchpoint = child_insert_vfork_catchpoint;
-  child_ops.to_remove_vfork_catchpoint = child_remove_vfork_catchpoint;
-  child_ops.to_follow_fork = child_follow_fork;
-  child_ops.to_insert_exec_catchpoint = child_insert_exec_catchpoint;
-  child_ops.to_remove_exec_catchpoint = child_remove_exec_catchpoint;
-  child_ops.to_reported_exec_events_per_exec_call = child_reported_exec_events_per_exec_call;
-  child_ops.to_has_exited = child_has_exited;
-  child_ops.to_mourn_inferior = child_mourn_inferior;
-  child_ops.to_can_run = child_can_run;
-  child_ops.to_thread_alive = child_thread_alive;
-  child_ops.to_pid_to_str = child_pid_to_str;
-  child_ops.to_stop = child_stop;
-  child_ops.to_enable_exception_callback = child_enable_exception_callback;
-  child_ops.to_get_current_exception_event = child_get_current_exception_event;
-  child_ops.to_pid_to_exec_file = child_pid_to_exec_file;
-  child_ops.to_stratum = process_stratum;
-  child_ops.to_has_all_memory = 1;
-  child_ops.to_has_memory = 1;
-  child_ops.to_has_stack = 1;
-  child_ops.to_has_registers = 1;
-  child_ops.to_has_execution = 1;
-  child_ops.to_magic = OPS_MAGIC;
-}
-
-/* Take over the 'find_mapped_memory' vector from inftarg.c. */
-extern void
-inftarg_set_find_memory_regions (int (*func) (int (*) (CORE_ADDR,
-						       unsigned long,
-						       int, int, int,
-						       void *),
-					      void *))
-{
-  child_ops.to_find_memory_regions = func;
-}
-
-/* Take over the 'make_corefile_notes' vector from inftarg.c. */
-extern void
-inftarg_set_make_corefile_notes (char * (*func) (bfd *, int *))
-{
-  child_ops.to_make_corefile_notes = func;
+  deprecated_child_ops.to_shortname = "child";
+  deprecated_child_ops.to_longname = "Unix child process";
+  deprecated_child_ops.to_doc = "Unix child process (started by the \"run\" command).";
+  deprecated_child_ops.to_open = child_open;
+  deprecated_child_ops.to_attach = child_attach;
+  deprecated_child_ops.to_post_attach = child_post_attach;
+  deprecated_child_ops.to_detach = child_detach;
+  deprecated_child_ops.to_resume = child_resume;
+  deprecated_child_ops.to_wait = child_wait;
+  deprecated_child_ops.to_fetch_registers = fetch_inferior_registers;
+  deprecated_child_ops.to_store_registers = store_inferior_registers;
+  deprecated_child_ops.to_prepare_to_store = child_prepare_to_store;
+  deprecated_child_ops.deprecated_xfer_memory = child_xfer_memory;
+  deprecated_child_ops.to_xfer_partial = child_xfer_partial;
+  deprecated_child_ops.to_files_info = child_files_info;
+  deprecated_child_ops.to_insert_breakpoint = memory_insert_breakpoint;
+  deprecated_child_ops.to_remove_breakpoint = memory_remove_breakpoint;
+  deprecated_child_ops.to_terminal_init = terminal_init_inferior;
+  deprecated_child_ops.to_terminal_inferior = terminal_inferior;
+  deprecated_child_ops.to_terminal_ours_for_output = terminal_ours_for_output;
+  deprecated_child_ops.to_terminal_save_ours = terminal_save_ours;
+  deprecated_child_ops.to_terminal_ours = terminal_ours;
+  deprecated_child_ops.to_terminal_info = child_terminal_info;
+  deprecated_child_ops.to_kill = kill_inferior;
+  deprecated_child_ops.to_create_inferior = child_create_inferior;
+  deprecated_child_ops.to_post_startup_inferior = child_post_startup_inferior;
+  deprecated_child_ops.to_acknowledge_created_inferior = child_acknowledge_created_inferior;
+  deprecated_child_ops.to_insert_fork_catchpoint = child_insert_fork_catchpoint;
+  deprecated_child_ops.to_remove_fork_catchpoint = child_remove_fork_catchpoint;
+  deprecated_child_ops.to_insert_vfork_catchpoint = child_insert_vfork_catchpoint;
+  deprecated_child_ops.to_remove_vfork_catchpoint = child_remove_vfork_catchpoint;
+  deprecated_child_ops.to_follow_fork = child_follow_fork;
+  deprecated_child_ops.to_insert_exec_catchpoint = child_insert_exec_catchpoint;
+  deprecated_child_ops.to_remove_exec_catchpoint = child_remove_exec_catchpoint;
+  deprecated_child_ops.to_reported_exec_events_per_exec_call = child_reported_exec_events_per_exec_call;
+  deprecated_child_ops.to_has_exited = child_has_exited;
+  deprecated_child_ops.to_mourn_inferior = child_mourn_inferior;
+  deprecated_child_ops.to_can_run = child_can_run;
+  deprecated_child_ops.to_thread_alive = child_thread_alive;
+  deprecated_child_ops.to_pid_to_str = child_pid_to_str;
+  deprecated_child_ops.to_stop = child_stop;
+  deprecated_child_ops.to_enable_exception_callback = child_enable_exception_callback;
+  deprecated_child_ops.to_get_current_exception_event = child_get_current_exception_event;
+  deprecated_child_ops.to_pid_to_exec_file = child_pid_to_exec_file;
+  deprecated_child_ops.to_stratum = process_stratum;
+  deprecated_child_ops.to_has_all_memory = 1;
+  deprecated_child_ops.to_has_memory = 1;
+  deprecated_child_ops.to_has_stack = 1;
+  deprecated_child_ops.to_has_registers = 1;
+  deprecated_child_ops.to_has_execution = 1;
+  deprecated_child_ops.to_magic = OPS_MAGIC;
 }
 
 void
@@ -702,5 +650,5 @@ _initialize_inftarg (void)
 #endif
 
   init_child_ops ();
-  add_target (&child_ops);
+  add_target (&deprecated_child_ops);
 }

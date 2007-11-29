@@ -1,7 +1,7 @@
 /* Motorola m68k native support for GNU/Linux.
 
-   Copyright 1996, 1998, 2000, 2001, 2002 Free Software Foundation,
-   Inc.
+   Copyright 1996, 1998, 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,12 +27,10 @@
 #include "gdbcore.h"
 #include "gdb_string.h"
 #include "regcache.h"
+#include "target.h"
+#include "linux-nat.h"
 
 #include "m68k-tdep.h"
-
-#ifdef USG
-#include <sys/types.h>
-#endif
 
 #include <sys/param.h>
 #include <sys/dir.h>
@@ -141,7 +139,7 @@ fetch_register (int regno)
   if (CANNOT_FETCH_REGISTER (regno))
     {
       memset (buf, '\0', register_size (current_gdbarch, regno));	/* Supply zeroes */
-      supply_register (regno, buf);
+      regcache_raw_supply (current_regcache, regno, buf);
       return;
     }
 
@@ -167,14 +165,14 @@ fetch_register (int regno)
 	  perror_with_name (mess);
 	}
     }
-  supply_register (regno, buf);
+  regcache_raw_supply (current_regcache, regno, buf);
 }
 
 /* Fetch register values from the inferior.
    If REGNO is negative, do this for all registers.
    Otherwise, REGNO specifies which register (so we can save time). */
 
-void
+static void
 old_fetch_inferior_registers (int regno)
 {
   if (regno >= 0)
@@ -218,7 +216,7 @@ store_register (int regno)
   regaddr = register_addr (regno, offset);
 
   /* Put the contents of regno into a local buffer */
-  regcache_collect (regno, buf);
+  regcache_raw_collect (current_regcache, regno, buf);
 
   /* Store the local buffer into the inferior a chunk at the time. */
   for (i = 0; i < register_size (current_gdbarch, regno);
@@ -241,7 +239,7 @@ store_register (int regno)
    If REGNO is negative, do this for all registers.
    Otherwise, REGNO specifies which register (so we can save time).  */
 
-void
+static void
 old_store_inferior_registers (int regno)
 {
   if (regno >= 0)
@@ -282,9 +280,9 @@ supply_gregset (elf_gregset_t *gregsetp)
   int regi;
 
   for (regi = M68K_D0_REGNUM; regi <= SP_REGNUM; regi++)
-    supply_register (regi, (char *) &regp[regmap[regi]]);
-  supply_register (PS_REGNUM, (char *) &regp[PT_SR]);
-  supply_register (PC_REGNUM, (char *) &regp[PT_PC]);
+    regcache_raw_supply (current_regcache, regi, (char *) &regp[regmap[regi]]);
+  regcache_raw_supply (current_regcache, PS_REGNUM, (char *) &regp[PT_SR]);
+  regcache_raw_supply (current_regcache, PC_REGNUM, (char *) &regp[PT_PC]);
 }
 
 /* Fill register REGNO (if it is a general-purpose register) in
@@ -298,7 +296,7 @@ fill_gregset (elf_gregset_t *gregsetp, int regno)
 
   for (i = 0; i < NUM_GREGS; i++)
     if (regno == -1 || regno == i)
-      regcache_collect (i, regp + regmap[i]);
+      regcache_raw_collect (current_regcache, i, regp + regmap[i]);
 }
 
 #ifdef HAVE_PTRACE_GETREGS
@@ -321,7 +319,7 @@ fetch_regs (int tid)
 	  return;
 	}
 
-      perror_with_name ("Couldn't get registers");
+      perror_with_name (_("Couldn't get registers"));
     }
 
   supply_gregset (&regs);
@@ -336,12 +334,12 @@ store_regs (int tid, int regno)
   elf_gregset_t regs;
 
   if (ptrace (PTRACE_GETREGS, tid, 0, (int) &regs) < 0)
-    perror_with_name ("Couldn't get registers");
+    perror_with_name (_("Couldn't get registers"));
 
   fill_gregset (&regs, regno);
 
   if (ptrace (PTRACE_SETREGS, tid, 0, (int) &regs) < 0)
-    perror_with_name ("Couldn't write registers");
+    perror_with_name (_("Couldn't write registers"));
 }
 
 #else
@@ -366,10 +364,14 @@ supply_fpregset (elf_fpregset_t *fpregsetp)
   int regi;
 
   for (regi = FP0_REGNUM; regi < FP0_REGNUM + 8; regi++)
-    supply_register (regi, FPREG_ADDR (fpregsetp, regi - FP0_REGNUM));
-  supply_register (M68K_FPC_REGNUM, (char *) &fpregsetp->fpcntl[0]);
-  supply_register (M68K_FPS_REGNUM, (char *) &fpregsetp->fpcntl[1]);
-  supply_register (M68K_FPI_REGNUM, (char *) &fpregsetp->fpcntl[2]);
+    regcache_raw_supply (current_regcache, regi,
+			 FPREG_ADDR (fpregsetp, regi - FP0_REGNUM));
+  regcache_raw_supply (current_regcache, M68K_FPC_REGNUM,
+		       (char *) &fpregsetp->fpcntl[0]);
+  regcache_raw_supply (current_regcache, M68K_FPS_REGNUM,
+		       (char *) &fpregsetp->fpcntl[1]);
+  regcache_raw_supply (current_regcache, M68K_FPI_REGNUM,
+		       (char *) &fpregsetp->fpcntl[2]);
 }
 
 /* Fill register REGNO (if it is a floating-point register) in
@@ -384,12 +386,14 @@ fill_fpregset (elf_fpregset_t *fpregsetp, int regno)
   /* Fill in the floating-point registers.  */
   for (i = FP0_REGNUM; i < FP0_REGNUM + 8; i++)
     if (regno == -1 || regno == i)
-      regcache_collect (i, FPREG_ADDR (fpregsetp, i - FP0_REGNUM));
+      regcache_raw_collect (current_regcache, i,
+			    FPREG_ADDR (fpregsetp, i - FP0_REGNUM));
 
   /* Fill in the floating-point control registers.  */
   for (i = M68K_FPC_REGNUM; i <= M68K_FPI_REGNUM; i++)
     if (regno == -1 || regno == i)
-      regcache_collect (i, (char *) &fpregsetp->fpcntl[i - M68K_FPC_REGNUM]);
+      regcache_raw_collect (current_regcache, i,
+			    (char *) &fpregsetp->fpcntl[i - M68K_FPC_REGNUM]);
 }
 
 #ifdef HAVE_PTRACE_GETREGS
@@ -403,7 +407,7 @@ fetch_fpregs (int tid)
   elf_fpregset_t fpregs;
 
   if (ptrace (PTRACE_GETFPREGS, tid, 0, (int) &fpregs) < 0)
-    perror_with_name ("Couldn't get floating point status");
+    perror_with_name (_("Couldn't get floating point status"));
 
   supply_fpregset (&fpregs);
 }
@@ -417,12 +421,12 @@ store_fpregs (int tid, int regno)
   elf_fpregset_t fpregs;
 
   if (ptrace (PTRACE_GETFPREGS, tid, 0, (int) &fpregs) < 0)
-    perror_with_name ("Couldn't get floating point status");
+    perror_with_name (_("Couldn't get floating point status"));
 
   fill_fpregset (&fpregs, regno);
 
   if (ptrace (PTRACE_SETFPREGS, tid, 0, (int) &fpregs) < 0)
-    perror_with_name ("Couldn't write floating point status");
+    perror_with_name (_("Couldn't write floating point status"));
 }
 
 #else
@@ -440,8 +444,8 @@ static void store_fpregs (int tid, int regno) {}
    this for all registers (including the floating point and SSE
    registers).  */
 
-void
-fetch_inferior_registers (int regno)
+static void
+m68k_linux_fetch_inferior_registers (int regno)
 {
   int tid;
 
@@ -490,14 +494,14 @@ fetch_inferior_registers (int regno)
     }
 
   internal_error (__FILE__, __LINE__,
-		  "Got request for bad register number %d.", regno);
+		  _("Got request for bad register number %d."), regno);
 }
 
 /* Store register REGNO back into the child process.  If REGNO is -1,
    do this for all registers (including the floating point and SSE
    registers).  */
-void
-store_inferior_registers (int regno)
+static void
+m68k_linux_store_inferior_registers (int regno)
 {
   int tid;
 
@@ -537,7 +541,7 @@ store_inferior_registers (int regno)
     }
 
   internal_error (__FILE__, __LINE__,
-		  "Got request to store bad register number %d.", regno);
+		  _("Got request to store bad register number %d."), regno);
 }
 
 /* Interpreting register set info found in core files.  */
@@ -569,7 +573,7 @@ fetch_core_registers (char *core_reg_sect, unsigned core_reg_size,
     {
     case 0:
       if (core_reg_size != sizeof (gregset))
-	warning ("Wrong size gregset in core file.");
+	warning (_("Wrong size gregset in core file."));
       else
 	{
 	  memcpy (&gregset, core_reg_sect, sizeof (gregset));
@@ -579,7 +583,7 @@ fetch_core_registers (char *core_reg_sect, unsigned core_reg_size,
 
     case 2:
       if (core_reg_size != sizeof (fpregset))
-	warning ("Wrong size fpregset in core file.");
+	warning (_("Wrong size fpregset in core file."));
       else
 	{
 	  memcpy (&fpregset, core_reg_sect, sizeof (fpregset));
@@ -614,8 +618,22 @@ static struct core_fns linux_elf_core_fns =
   NULL					/* next */
 };
 
+void _initialize_m68k_linux_nat (void);
+
 void
 _initialize_m68k_linux_nat (void)
 {
-  add_core_fns (&linux_elf_core_fns);
+  struct target_ops *t;
+
+  /* Fill in the generic GNU/Linux methods.  */
+  t = linux_target ();
+
+  /* Add our register access methods.  */
+  t->to_fetch_registers = m68k_linux_fetch_inferior_registers;
+  t->to_store_registers = m68k_linux_store_inferior_registers;
+
+  /* Register the target.  */
+  add_target (t);
+
+  deprecated_add_core_fns (&linux_elf_core_fns);
 }

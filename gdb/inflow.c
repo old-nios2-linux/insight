@@ -42,6 +42,10 @@
 #include <sys/ioctl.h>
 #endif
 
+#ifndef O_NOCTTY
+#define O_NOCTTY 0
+#endif
+
 #if defined (SIGIO) && defined (FASYNC) && defined (FD_SET) && defined (F_SETOWN)
 static void handle_sigio (int);
 #endif
@@ -90,7 +94,7 @@ static void (*sigquit_ours) ();
 /* The name of the tty (from the `tty' command) that we gave to the inferior
    when it was last started.  */
 
-static char *inferior_thisrun_terminal;
+static const char *inferior_thisrun_terminal;
 
 /* Nonzero if our terminal settings are in effect.  Zero if the
    inferior's settings are in effect.  Ignored if !gdb_has_a_terminal
@@ -425,11 +429,11 @@ child_terminal_info (char *args, int from_tty)
 {
   if (!gdb_has_a_terminal ())
     {
-      printf_filtered ("This GDB does not control a terminal.\n");
+      printf_filtered (_("This GDB does not control a terminal.\n"));
       return;
     }
 
-  printf_filtered ("Inferior's terminal status (currently saved by GDB):\n");
+  printf_filtered (_("Inferior's terminal status (currently saved by GDB):\n"));
 
   /* First the fcntl flags.  */
   {
@@ -505,7 +509,7 @@ child_terminal_info (char *args, int from_tty)
    the terminal specified in the NEW_TTY_PREFORK call.  */
 
 void
-new_tty_prefork (char *ttyname)
+new_tty_prefork (const char *ttyname)
 {
   /* Save the name for later, for determining whether we and the child
      are sharing a tty.  */
@@ -537,12 +541,7 @@ new_tty (void)
 #endif
 
   /* Now open the specified new terminal.  */
-
-#ifdef USE_O_NOCTTY
   tty = open (inferior_thisrun_terminal, O_RDWR | O_NOCTTY);
-#else
-  tty = open (inferior_thisrun_terminal, O_RDWR);
-#endif
   if (tty == -1)
     {
       print_sys_errmsg (inferior_thisrun_terminal, errno);
@@ -580,9 +579,9 @@ kill_command (char *arg, int from_tty)
      some targets don't have processes! */
 
   if (ptid_equal (inferior_ptid, null_ptid))
-    error ("The program is not being run.");
+    error (_("The program is not being run."));
   if (!query ("Kill the program being debugged? "))
-    error ("Not confirmed.");
+    error (_("Not confirmed."));
   target_kill ();
 
   init_thread_list ();		/* Destroy thread info */
@@ -591,13 +590,13 @@ kill_command (char *arg, int from_tty)
      print the state we are left in.  */
   if (target_has_stack)
     {
-      printf_filtered ("In %s,\n", target_longname);
+      printf_filtered (_("In %s,\n"), target_longname);
       if (deprecated_selected_frame == NULL)
 	fputs_filtered ("No selected stack frame.\n", gdb_stdout);
       else
-	print_stack_frame (deprecated_selected_frame,
-			   frame_relative_level (deprecated_selected_frame), 1);
+	print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC);
     }
+  bfd_cache_close_all ();
 }
 
 /* Call set_sigint_trap when you need to pass a signal on to an attached
@@ -682,14 +681,14 @@ void
 set_sigio_trap (void)
 {
   if (target_activity_function)
-    internal_error (__FILE__, __LINE__, "failed internal consistency check");
+    internal_error (__FILE__, __LINE__, _("failed internal consistency check"));
 }
 
 void
 clear_sigio_trap (void)
 {
   if (target_activity_function)
-    internal_error (__FILE__, __LINE__, "failed internal consistency check");
+    internal_error (__FILE__, __LINE__, _("failed internal consistency check"));
 }
 #endif /* No SIGIO.  */
 
@@ -735,10 +734,10 @@ void
 _initialize_inflow (void)
 {
   add_info ("terminal", term_info,
-	    "Print inferior's saved terminal status.");
+	    _("Print inferior's saved terminal status."));
 
   add_com ("kill", class_run, kill_command,
-	   "Kill execution of program being debugged.");
+	   _("Kill execution of program being debugged."));
 
   inferior_ptid = null_ptid;
 

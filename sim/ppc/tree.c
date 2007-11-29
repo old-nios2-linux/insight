@@ -539,7 +539,7 @@ parse_reg_property(device *current,
     if (device_nr_size_cells(bus) > 0)
       chp = parse_size(current, bus, chp, &regs[reg_nr].size);
     else
-      memset(&regs[reg_nr].size, sizeof (&regs[reg_nr].size), 0);
+      memset(&regs[reg_nr].size, 0, sizeof (&regs[reg_nr].size));
   }
 
   /* create it */
@@ -619,7 +619,7 @@ parse_integer_property(device *current,
     for (i = 0; i < nr_entries; i++) {
       H2BE(words[i]);
     }
-    /* perhaphs integer array property is better */
+    /* perhaps integer array property is better */
     device_add_array_property(current, property_name, words,
                               sizeof(words[0]) * nr_entries);
   }

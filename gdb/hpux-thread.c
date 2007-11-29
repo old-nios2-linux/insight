@@ -1,5 +1,8 @@
-/* Low level interface for debugging HPUX/DCE threads for GDB, the GNU debugger.
-   Copyright 1996, 1998, 1999, 2000, 2001 Free Software Foundation, Inc.
+/* Low level interface for debugging HPUX/DCE threads for GDB, the GNU
+   debugger.
+
+   Copyright 1996, 1998, 1999, 2000, 2001, 2004 Free Software
+   Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,11 +44,12 @@
 #include "inferior.h"
 #include "regcache.h"
 #include <fcntl.h>
+#include <string.h>
 #include "gdb_stat.h"
 #include "gdbcore.h"
+#include "hppa-tdep.h"
 
 extern int child_suppress_run;
-extern struct target_ops child_ops;	/* target vector for inftarg.c */
 
 extern void _initialize_hpux_thread (void);
 
@@ -124,7 +128,7 @@ find_tcb (ptid_t ptid)
 	  }
     }
 
-  error ("Can't find TCB %d", thread);
+  error (_("Can't find TCB %d"), thread);
   return NULL;
 }
 
@@ -134,7 +138,7 @@ find_tcb (ptid_t ptid)
 static void
 hpux_thread_open (char *arg, int from_tty)
 {
-  child_ops.to_open (arg, from_tty);
+  deprecated_child_ops.to_open (arg, from_tty);
 }
 
 /* Attach to process PID, then initialize for debugging it
@@ -143,7 +147,7 @@ hpux_thread_open (char *arg, int from_tty)
 static void
 hpux_thread_attach (char *args, int from_tty)
 {
-  child_ops.to_attach (args, from_tty);
+  deprecated_child_ops.to_attach (args, from_tty);
 
   /* XXX - might want to iterate over all the threads and register them. */
 }
@@ -159,7 +163,7 @@ hpux_thread_attach (char *args, int from_tty)
 static void
 hpux_thread_detach (char *args, int from_tty)
 {
-  child_ops.to_detach (args, from_tty);
+  deprecated_child_ops.to_detach (args, from_tty);
 }
 
 /* Resume execution of process PID.  If STEP is nozero, then
@@ -182,11 +186,11 @@ hpux_thread_resume (ptid_t ptid, int step, enum target_signal signo)
     {
       pid = thread_to_lwp (pid, -2);
       if (pid == -2)		/* Inactive thread */
-	error ("This version of Solaris can't start inactive threads.");
+	error (_("This version of Solaris can't start inactive threads."));
     }
 #endif
 
-  child_ops.to_resume (ptid, step, signo);
+  deprecated_child_ops.to_resume (ptid, step, signo);
 
   cached_thread = 0;
 
@@ -209,7 +213,7 @@ hpux_thread_wait (ptid_t ptid, struct target_waitstatus *ourstatus)
   if (!ptid_equal (ptid, minus_one_ptid))
     ptid = main_ptid;
 
-  rtnval = child_ops.to_wait (ptid, ourstatus);
+  rtnval = deprecated_child_ops.to_wait (ptid, ourstatus);
 
   rtnval = find_active_thread ();
 
@@ -218,7 +222,7 @@ hpux_thread_wait (ptid_t ptid, struct target_waitstatus *ourstatus)
   return rtnval;
 }
 
-static char regmap[NUM_REGS] =
+static char regmap[] =
 {
   -2, -1, -1, 0, 4, 8, 12, 16, 20, 24,	/* flags, r1 -> r9 */
   28, 32, 36, 40, 44, 48, 52, 56, 60, -1,	/* r10 -> r19 */
@@ -260,7 +264,7 @@ hpux_thread_fetch_registers (int regno)
 
   if (tcb_ptr->state == cma__c_state_running)
     {
-      child_ops.to_fetch_registers (regno);
+      deprecated_child_ops.to_fetch_registers (regno);
 
       do_cleanups (old_chain);
 
@@ -281,7 +285,7 @@ hpux_thread_fetch_registers (int regno)
   for (regno = first_regno; regno <= last_regno; regno++)
     {
       if (regmap[regno] == -1)
-	child_ops.to_fetch_registers (regno);
+	deprecated_child_ops.to_fetch_registers (regno);
       else
 	{
 	  unsigned char buf[MAX_REGISTER_SIZE];
@@ -289,17 +293,17 @@ hpux_thread_fetch_registers (int regno)
 
 	  sp = (CORE_ADDR) tcb_ptr->static_ctx.sp - 160;
 
-	  if (regno == FLAGS_REGNUM)
+	  if (regno == HPPA_FLAGS_REGNUM)
 	    /* Flags must be 0 to avoid bogus value for SS_INSYSCALL */
-	    memset (buf, '\000', DEPRECATED_REGISTER_RAW_SIZE (regno));
-	  else if (regno == SP_REGNUM)
+	    memset (buf, '\000', register_size (current_gdbarch, regno));
+	  else if (regno == HPPA_SP_REGNUM)
 	    store_unsigned_integer (buf, sizeof sp, sp);
-	  else if (regno == PC_REGNUM)
-	    read_memory (sp - 20, buf, DEPRECATED_REGISTER_RAW_SIZE (regno));
+	  else if (regno == HPPA_PCOQ_HEAD_REGNUM)
+	    read_memory (sp - 20, buf, register_size (current_gdbarch, regno));
 	  else
-	    read_memory (sp + regmap[regno], buf, DEPRECATED_REGISTER_RAW_SIZE (regno));
+	    read_memory (sp + regmap[regno], buf, register_size (current_gdbarch, regno));
 
-	  supply_register (regno, buf);
+	  regcache_raw_supply (current_regcache, regno, buf);
 	}
     }
 
@@ -322,7 +326,7 @@ hpux_thread_store_registers (int regno)
 
   if (tcb_ptr->state == cma__c_state_running)
     {
-      child_ops.to_store_registers (regno);
+      deprecated_child_ops.to_store_registers (regno);
 
       do_cleanups (old_chain);
 
@@ -343,7 +347,7 @@ hpux_thread_store_registers (int regno)
   for (regno = first_regno; regno <= last_regno; regno++)
     {
       if (regmap[regno] == -1)
-	child_ops.to_store_registers (regno);
+	deprecated_child_ops.to_store_registers (regno);
       else
 	{
 	  unsigned char buf[MAX_REGISTER_SIZE];
@@ -351,25 +355,28 @@ hpux_thread_store_registers (int regno)
 
 	  sp = (CORE_ADDR) tcb_ptr->static_ctx.sp - 160;
 
-	  if (regno == FLAGS_REGNUM)
-	    child_ops.to_store_registers (regno);	/* Let lower layer handle this... */
-	  else if (regno == SP_REGNUM)
+	  if (regno == HPPA_FLAGS_REGNUM)
+	    deprecated_child_ops.to_store_registers (regno);	/* Let lower layer handle this... */
+	  else if (regno == HPPA_SP_REGNUM)
 	    {
-	      write_memory ((CORE_ADDR) & tcb_ptr->static_ctx.sp,
-			    &deprecated_registers[DEPRECATED_REGISTER_BYTE (regno)],
-			    DEPRECATED_REGISTER_RAW_SIZE (regno));
-	      tcb_ptr->static_ctx.sp = (cma__t_hppa_regs *)
-		(extract_unsigned_integer (&deprecated_registers[DEPRECATED_REGISTER_BYTE (regno)],
-					   DEPRECATED_REGISTER_RAW_SIZE (regno)) + 160);
+	      regcache_raw_read (current_regcache, regno, buf);
+	      write_memory ((CORE_ADDR) &tcb_ptr->static_ctx.sp, buf,
+			    register_size (current_gdbarch, regno));
+	      tcb_ptr->static_ctx.sp
+		= (cma__t_hppa_regs *) ((CORE_ADDR) buf + 160);
 	    }
-	  else if (regno == PC_REGNUM)
-	    write_memory (sp - 20,
-			  &deprecated_registers[DEPRECATED_REGISTER_BYTE (regno)],
-			  DEPRECATED_REGISTER_RAW_SIZE (regno));
+	  else if (regno == HPPA_PCOQ_HEAD_REGNUM)
+	    {
+	      regcache_raw_read (current_regcache, regno, buf);
+	      write_memory (sp - 20, buf,
+			    register_size (current_gdbarch, regno));
+	    }
 	  else
-	    write_memory (sp + regmap[regno],
-			  &deprecated_registers[DEPRECATED_REGISTER_BYTE (regno)],
-			  DEPRECATED_REGISTER_RAW_SIZE (regno));
+	    {
+	      regcache_raw_read (current_regcache, regno, buf);
+	      write_memory (sp + regmap[regno], buf,
+			    register_size (current_gdbarch, regno));
+	    }
 	}
     }
 
@@ -385,7 +392,7 @@ hpux_thread_store_registers (int regno)
 static void
 hpux_thread_prepare_to_store (void)
 {
-  child_ops.to_prepare_to_store ();
+  deprecated_child_ops.to_prepare_to_store ();
 }
 
 static int
@@ -401,7 +408,7 @@ hpux_thread_xfer_memory (CORE_ADDR memaddr, char *myaddr, int len,
   inferior_ptid = main_ptid;
 
   retval = 
-    child_ops.to_xfer_memory (memaddr, myaddr, len, dowrite, attribs, target);
+    deprecated_child_ops.deprecated_xfer_memory (memaddr, myaddr, len, dowrite, attribs, target);
 
   do_cleanups (old_chain);
 
@@ -413,27 +420,28 @@ hpux_thread_xfer_memory (CORE_ADDR memaddr, char *myaddr, int len,
 static void
 hpux_thread_files_info (struct target_ops *ignore)
 {
-  child_ops.to_files_info (ignore);
+  deprecated_child_ops.to_files_info (ignore);
 }
 
 static void
 hpux_thread_kill_inferior (void)
 {
-  child_ops.to_kill ();
+  deprecated_child_ops.to_kill ();
 }
 
 static void
 hpux_thread_notice_signals (ptid_t ptid)
 {
-  child_ops.to_notice_signals (ptid);
+  deprecated_child_ops.to_notice_signals (ptid);
 }
 
 /* Fork an inferior process, and start debugging it with /proc.  */
 
 static void
-hpux_thread_create_inferior (char *exec_file, char *allargs, char **env)
+hpux_thread_create_inferior (char *exec_file, char *allargs, char **env,
+			     int from_tty)
 {
-  child_ops.to_create_inferior (exec_file, allargs, env);
+  deprecated_child_ops.to_create_inferior (exec_file, allargs, env, from_tty);
 
   if (hpux_thread_active)
     {
@@ -497,7 +505,7 @@ quit:
 static void
 hpux_thread_mourn_inferior (void)
 {
-  child_ops.to_mourn_inferior ();
+  deprecated_child_ops.to_mourn_inferior ();
 }
 
 /* Mark our target-struct as eligible for stray "run" and "attach" commands.  */
@@ -517,7 +525,7 @@ hpux_thread_alive (ptid_t ptid)
 static void
 hpux_thread_stop (void)
 {
-  child_ops.to_stop ();
+  deprecated_child_ops.to_stop ();
 }
 
 /* Convert a pid to printable form. */
@@ -547,7 +555,7 @@ init_hpux_thread_ops (void)
   hpux_thread_ops.to_fetch_registers = hpux_thread_fetch_registers;
   hpux_thread_ops.to_store_registers = hpux_thread_store_registers;
   hpux_thread_ops.to_prepare_to_store = hpux_thread_prepare_to_store;
-  hpux_thread_ops.to_xfer_memory = hpux_thread_xfer_memory;
+  hpux_thread_ops.deprecated_xfer_memory = hpux_thread_xfer_memory;
   hpux_thread_ops.to_files_info = hpux_thread_files_info;
   hpux_thread_ops.to_insert_breakpoint = memory_insert_breakpoint;
   hpux_thread_ops.to_remove_breakpoint = memory_remove_breakpoint;
@@ -580,7 +588,7 @@ _initialize_hpux_thread (void)
   add_target (&hpux_thread_ops);
 
   child_suppress_run = 1;
-  /* Hook into new_objfile notification. */
-  target_new_objfile_chain = target_new_objfile_hook;
-  target_new_objfile_hook  = hpux_thread_new_objfile;
+  /* Hook into new_objfile notification.  */
+  target_new_objfile_chain = deprecated_target_new_objfile_hook;
+  deprecated_target_new_objfile_hook  = hpux_thread_new_objfile;
 }

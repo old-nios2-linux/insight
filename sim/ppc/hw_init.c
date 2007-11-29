@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
     
-    Copyright 1994, 1997, 2003 Andrew Cagney
+    Copyright 1994, 1997, 2003, 2004 Andrew Cagney
     
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -329,7 +329,7 @@ update_for_binary_section(bfd *abfd,
     return;
 
   /* check/ignore any sections of size zero */
-  section_size = bfd_get_section_size_before_reloc(the_section);
+  section_size = bfd_get_section_size (the_section);
   if (section_size == 0)
     return;
 
@@ -718,4 +718,4 @@ const device_descriptor hw_init_device_descriptor[] = {
   { NULL },
 };
 
-#endif _HW_INIT_C_
+#endif /* _HW_INIT_C_ */

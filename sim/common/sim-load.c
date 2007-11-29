@@ -1,5 +1,5 @@
 /* Utility to load a file into the simulator.
-   Copyright (C) 1997 Free Software Foundation, Inc.
+   Copyright (C) 1997, 1998, 2001, 2002, 2004 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,14 +19,12 @@ along with this program; if not, write to the Free Software Foundation, Inc.,
    as it is used by simulators that don't use it [though that doesn't mean
    to suggest that they shouldn't :-)].  */
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+#include "cconfig.h"
+#endif
 #include "ansidecl.h"
 #include <stdio.h> /* for NULL */
-#ifdef ANSI_PROTOTYPES
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
@@ -110,7 +108,7 @@ sim_load_file (sd, myname, callback, prog, prog_bfd, verbose_p, lma_p, do_write)
 	{
 	  bfd_size_type size;
 
-	  size = bfd_get_section_size_before_reloc (s);
+	  size = bfd_get_section_size (s);
 	  if (size > 0)
 	    {
 	      char *buffer;
@@ -174,17 +172,9 @@ sim_load_file (sd, myname, callback, prog, prog_bfd, verbose_p, lma_p, do_write)
 static void
 xprintf VPARAMS ((host_callback *callback, const char *fmt, ...))
 {
-#ifndef ANSI_PROTOTYPES
-  host_callback *callback;
-  char *fmt;
-#endif
   va_list ap;
 
   VA_START (ap, fmt);
-#ifndef ANSI_PROTOTYPES
-  callback = va_arg (ap, host_callback *);
-  fmt = va_arg (ap, char *);
-#endif
 
   (*callback->vprintf_filtered) (callback, fmt, ap);
 
@@ -194,17 +184,9 @@ xprintf VPARAMS ((host_callback *callback, const char *fmt, ...))
 static void
 eprintf VPARAMS ((host_callback *callback, const char *fmt, ...))
 {
-#ifndef ANSI_PROTOTYPES
-  host_callback *callback;
-  char *fmt;
-#endif
   va_list ap;
 
   VA_START (ap, fmt);
-#ifndef ANSI_PROTOTYPES
-  callback = va_arg (ap, host_callback *);
-  fmt = va_arg (ap, char *);
-#endif
 
   (*callback->evprintf_filtered) (callback, fmt, ap);
 

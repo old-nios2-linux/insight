@@ -41,6 +41,7 @@
 #include "source.h"
 #include "filenames.h"		/* for FILENAME_CMP */
 #include "objc-lang.h"
+#include "ada-lang.h"
 
 #include "hashtab.h"
 
@@ -54,6 +55,7 @@
 #include "gdb_stat.h"
 #include <ctype.h>
 #include "cp-abi.h"
+#include "observer.h"
 
 /* Prototypes for local functions */
 
@@ -69,7 +71,7 @@ static void variables_info (char *, int);
 
 static void sources_info (char *, int);
 
-static void output_source_filename (char *, int *);
+static void output_source_filename (const char *, int *);
 
 static int find_line_common (struct linetable *, int, int *);
 
@@ -114,9 +116,9 @@ struct symbol *lookup_symbol_aux_minsyms (const char *name,
 					  struct symtab **symtab);
 #endif
 
-/* This flag is used in hppa-tdep.c, and set in hp-symtab-read.c */
-/* Signals the presence of objects compiled by HP compilers */
-int hp_som_som_object_present = 0;
+/* This flag is used in hppa-tdep.c, and set in hp-symtab-read.c.
+   Signals the presence of objects compiled by HP compilers.  */
+int deprecated_hp_som_som_object_present = 0;
 
 static void fixup_section (struct general_symbol_info *, struct objfile *);
 
@@ -181,21 +183,25 @@ got_symtab:
     
     if (full_path != NULL)
       {
-	const char *fp = symtab_to_filename (s);
-	if (FILENAME_CMP (full_path, fp) == 0)
-	  {
-	    return s;
-	  }
+        const char *fp = symtab_to_fullname (s);
+        if (fp != NULL && FILENAME_CMP (full_path, fp) == 0)
+          {
+            return s;
+          }
       }
 
     if (real_path != NULL)
       {
-	char *rp = gdb_realpath (symtab_to_filename (s));
-        make_cleanup (xfree, rp);
-	if (FILENAME_CMP (real_path, rp) == 0)
-	  {
-	    return s;
-	  }
+        char *fullname = symtab_to_fullname (s);
+        if (fullname != NULL)
+          {
+            char *rp = gdb_realpath (fullname);
+            make_cleanup (xfree, rp);
+            if (FILENAME_CMP (real_path, rp) == 0)
+              {
+                return s;
+              }
+          }
       }
   }
 
@@ -216,7 +222,7 @@ got_symtab:
     return (NULL);
 
   if (ps->readin)
-    error ("Internal: readin %s pst for `%s' found when no symtab found.",
+    error (_("Internal: readin %s pst for `%s' found when no symtab found."),
 	   ps->filename, name);
 
   s = PSYMTAB_TO_SYMTAB (ps);
@@ -268,8 +274,7 @@ lookup_partial_symtab (const char *name)
        this symtab and use its absolute path.  */
     if (full_path != NULL)
       {
-	if (pst->fullname == NULL)
-	  source_full_path_of (pst->filename, &pst->fullname);
+	psymtab_to_fullname (pst);
 	if (pst->fullname != NULL
 	    && FILENAME_CMP (full_path, pst->fullname) == 0)
 	  {
@@ -280,8 +285,7 @@ lookup_partial_symtab (const char *name)
     if (real_path != NULL)
       {
         char *rp = NULL;
-	if (pst->fullname == NULL)
-	  source_full_path_of (pst->filename, &pst->fullname);
+	psymtab_to_fullname (pst);
         if (pst->fullname != NULL)
           {
             rp = gdb_realpath (pst->fullname);
@@ -427,9 +431,9 @@ create_demangled_names_hash (struct objfile *objfile)
      Choosing a much larger table size wastes memory, and saves only about
      1% in symbol reading.  */
 
-  objfile->demangled_names_hash = htab_create_alloc_ex
+  objfile->demangled_names_hash = htab_create_alloc
     (256, htab_hash_string, (int (*) (const void *, const void *)) streq,
-     NULL, objfile->md, xmcalloc, xmfree);
+     NULL, xcalloc, xfree);
 }
 
 /* Try to determine the demangled name for a symbol, based on the
@@ -632,17 +636,24 @@ symbol_init_demangled_name (struct general_symbol_info *gsymbol,
 char *
 symbol_natural_name (const struct general_symbol_info *gsymbol)
 {
-  if ((gsymbol->language == language_cplus
-       || gsymbol->language == language_java
-       || gsymbol->language == language_objc)
-      && (gsymbol->language_specific.cplus_specific.demangled_name != NULL))
+  switch (gsymbol->language) 
     {
-      return gsymbol->language_specific.cplus_specific.demangled_name;
+    case language_cplus:
+    case language_java:
+    case language_objc:
+      if (gsymbol->language_specific.cplus_specific.demangled_name != NULL)
+	return gsymbol->language_specific.cplus_specific.demangled_name;
+      break;
+    case language_ada:
+      if (gsymbol->language_specific.cplus_specific.demangled_name != NULL)
+	return gsymbol->language_specific.cplus_specific.demangled_name;
+      else
+	return ada_decode_symbol (gsymbol);
+      break;
+    default:
+      break;
     }
-  else
-    {
-      return gsymbol->name;
-    }
+  return gsymbol->name;
 }
 
 /* Return the demangled name for a symbol based on the language for
@@ -650,13 +661,37 @@ symbol_natural_name (const struct general_symbol_info *gsymbol)
 char *
 symbol_demangled_name (struct general_symbol_info *gsymbol)
 {
-  if (gsymbol->language == language_cplus
-      || gsymbol->language == language_java
-      || gsymbol->language == language_objc)
-    return gsymbol->language_specific.cplus_specific.demangled_name;
+  switch (gsymbol->language) 
+    {
+    case language_cplus:
+    case language_java:
+    case language_objc:
+      if (gsymbol->language_specific.cplus_specific.demangled_name != NULL)
+	return gsymbol->language_specific.cplus_specific.demangled_name;
+      break;
+    case language_ada:
+      if (gsymbol->language_specific.cplus_specific.demangled_name != NULL)
+	return gsymbol->language_specific.cplus_specific.demangled_name;
+      else
+	return ada_decode_symbol (gsymbol);
+      break;
+    default:
+      break;
+    }
+  return NULL;
+}
 
-  else 
-    return NULL;
+/* Return the search name of a symbol---generally the demangled or
+   linkage name of the symbol, depending on how it will be searched for.
+   If there is no distinct demangled name, then returns the same value 
+   (same pointer) as SYMBOL_LINKAGE_NAME. */
+char *
+symbol_search_name (const struct general_symbol_info *gsymbol)
+{
+  if (gsymbol->language == language_ada)
+    return gsymbol->name;
+  else
+    return symbol_natural_name (gsymbol);
 }
 
 /* Initialize the structure fields to zero values.  */
@@ -868,6 +903,62 @@ fixup_section (struct general_symbol_info *ginfo, struct objfile *objfile)
       ginfo->bfd_section = SYMBOL_BFD_SECTION (msym);
       ginfo->section = SYMBOL_SECTION (msym);
     }
+  else if (objfile)
+    {
+      /* Static, function-local variables do appear in the linker
+	 (minimal) symbols, but are frequently given names that won't
+	 be found via lookup_minimal_symbol().  E.g., it has been
+	 observed in frv-uclinux (ELF) executables that a static,
+	 function-local variable named "foo" might appear in the
+	 linker symbols as "foo.6" or "foo.3".  Thus, there is no
+	 point in attempting to extend the lookup-by-name mechanism to
+	 handle this case due to the fact that there can be multiple
+	 names.
+	 
+	 So, instead, search the section table when lookup by name has
+	 failed.  The ``addr'' and ``endaddr'' fields may have already
+	 been relocated.  If so, the relocation offset (i.e. the
+	 ANOFFSET value) needs to be subtracted from these values when
+	 performing the comparison.  We unconditionally subtract it,
+	 because, when no relocation has been performed, the ANOFFSET
+	 value will simply be zero.
+	 
+	 The address of the symbol whose section we're fixing up HAS
+	 NOT BEEN adjusted (relocated) yet.  It can't have been since
+	 the section isn't yet known and knowing the section is
+	 necessary in order to add the correct relocation value.  In
+	 other words, we wouldn't even be in this function (attempting
+	 to compute the section) if it were already known.
+
+	 Note that it is possible to search the minimal symbols
+	 (subtracting the relocation value if necessary) to find the
+	 matching minimal symbol, but this is overkill and much less
+	 efficient.  It is not necessary to find the matching minimal
+	 symbol, only its section.  
+	 
+	 Note that this technique (of doing a section table search)
+	 can fail when unrelocated section addresses overlap.  For
+	 this reason, we still attempt a lookup by name prior to doing
+	 a search of the section table.  */
+	 
+      CORE_ADDR addr;
+      struct obj_section *s;
+
+      addr = ginfo->value.address;
+
+      ALL_OBJFILE_OSECTIONS (objfile, s)
+	{
+	  int idx = s->the_bfd_section->index;
+	  CORE_ADDR offset = ANOFFSET (objfile->section_offsets, idx);
+
+	  if (s->addr - offset <= addr && addr < s->endaddr - offset)
+	    {
+	      ginfo->bfd_section = s->the_bfd_section;
+	      ginfo->section = idx;
+	      return;
+	    }
+	}
+    }
 }
 
 struct symbol *
@@ -932,11 +1023,22 @@ lookup_symbol (const char *name, const struct block *block,
 
   modified_name = name;
 
-  /* If we are using C++ language, demangle the name before doing a lookup, so
+  /* If we are using C++ or Java, demangle the name before doing a lookup, so
      we can always binary search. */
   if (current_language->la_language == language_cplus)
     {
       demangled_name = cplus_demangle (name, DMGL_ANSI | DMGL_PARAMS);
+      if (demangled_name)
+	{
+	  mangled_name = name;
+	  modified_name = demangled_name;
+	  needtofreename = 1;
+	}
+    }
+  else if (current_language->la_language == language_java)
+    {
+      demangled_name = cplus_demangle (name, 
+		      		       DMGL_ANSI | DMGL_PARAMS | DMGL_JAVA);
       if (demangled_name)
 	{
 	  mangled_name = name;
@@ -1194,7 +1296,7 @@ lookup_symbol_aux_psymtabs (int block_index, const char *name,
 				       STATIC_BLOCK : GLOBAL_BLOCK);
 	    sym = lookup_block_symbol (block, name, linkage_name, domain);
 	    if (!sym)
-	      error ("Internal: %s symbol `%s' found in %s psymtab but not in symtab.\n%s may be an inlined function, or may be a template function\n(if a template, try specifying an instantiation: %s<type>).",
+	      error (_("Internal: %s symbol `%s' found in %s psymtab but not in symtab.\n%s may be an inlined function, or may be a template function\n(if a template, try specifying an instantiation: %s<type>)."),
 		     block_index == GLOBAL_BLOCK ? "global" : "static",
 		     name, ps->filename, name, name);
 	  }
@@ -1461,13 +1563,13 @@ lookup_partial_symbol (struct partial_symtab *pst, const char *name,
 	{
 	  center = bottom + (top - bottom) / 2;
 	  if (!(center < top))
-	    internal_error (__FILE__, __LINE__, "failed internal consistency check");
+	    internal_error (__FILE__, __LINE__, _("failed internal consistency check"));
 	  if (!do_linear_search
 	      && (SYMBOL_LANGUAGE (*center) == language_java))
 	    {
 	      do_linear_search = 1;
 	    }
-	  if (strcmp_iw_ordered (SYMBOL_NATURAL_NAME (*center), name) >= 0)
+	  if (strcmp_iw_ordered (SYMBOL_SEARCH_NAME (*center), name) >= 0)
 	    {
 	      top = center;
 	    }
@@ -1477,12 +1579,12 @@ lookup_partial_symbol (struct partial_symtab *pst, const char *name,
 	    }
 	}
       if (!(top == bottom))
-	internal_error (__FILE__, __LINE__, "failed internal consistency check");
+	internal_error (__FILE__, __LINE__, _("failed internal consistency check"));
 
       while (top <= real_top
 	     && (linkage_name != NULL
 		 ? strcmp (SYMBOL_LINKAGE_NAME (*top), linkage_name) == 0
-		 : SYMBOL_MATCHES_NATURAL_NAME (*top,name)))
+		 : SYMBOL_MATCHES_SEARCH_NAME (*top,name)))
 	{
 	  if (SYMBOL_DOMAIN (*top) == domain)
 	    {
@@ -1503,7 +1605,7 @@ lookup_partial_symbol (struct partial_symtab *pst, const char *name,
 	    {
 	      if (linkage_name != NULL
 		  ? strcmp (SYMBOL_LINKAGE_NAME (*psym), linkage_name) == 0
-		  : SYMBOL_MATCHES_NATURAL_NAME (*psym, name))
+		  : SYMBOL_MATCHES_SEARCH_NAME (*psym, name))
 		{
 		  return (*psym);
 		}
@@ -1575,9 +1677,9 @@ basic_lookup_transparent_type (const char *name)
 	    block = BLOCKVECTOR_BLOCK (bv, STATIC_BLOCK);
 	    sym = lookup_block_symbol (block, name, NULL, STRUCT_DOMAIN);
 	    if (!sym)
-	      error ("Internal: global symbol `%s' found in %s psymtab but not in symtab.\n\
+	      error (_("Internal: global symbol `%s' found in %s psymtab but not in symtab.\n\
 %s may be an inlined function, or may be a template function\n\
-(if a template, try specifying an instantiation: %s<type>).",
+(if a template, try specifying an instantiation: %s<type>)."),
 		     name, ps->filename, name, name);
 	  }
 	if (!TYPE_IS_OPAQUE (SYMBOL_TYPE (sym)))
@@ -1622,9 +1724,9 @@ basic_lookup_transparent_type (const char *name)
 	    block = BLOCKVECTOR_BLOCK (bv, GLOBAL_BLOCK);
 	    sym = lookup_block_symbol (block, name, NULL, STRUCT_DOMAIN);
 	    if (!sym)
-	      error ("Internal: static symbol `%s' found in %s psymtab but not in symtab.\n\
+	      error (_("Internal: static symbol `%s' found in %s psymtab but not in symtab.\n\
 %s may be an inlined function, or may be a template function\n\
-(if a template, try specifying an instantiation: %s<type>).",
+(if a template, try specifying an instantiation: %s<type>)."),
 		     name, ps->filename, name, name);
 	  }
 	if (!TYPE_IS_OPAQUE (SYMBOL_TYPE (sym)))
@@ -1822,8 +1924,8 @@ find_pc_sect_symtab (CORE_ADDR pc, asection *section)
 	/* Might want to error() here (in case symtab is corrupt and
 	   will cause a core dump), but maybe we can successfully
 	   continue, so let's not.  */
-	warning ("\
-(Internal error: pc 0x%s in read in psymtab, but not in symtab.)\n",
+	warning (_("\
+(Internal error: pc 0x%s in read in psymtab, but not in symtab.)\n"),
 		 paddr_nz (pc));
       s = PSYMTAB_TO_SYMTAB (ps);
     }
@@ -2349,7 +2451,7 @@ find_function_start_sal (struct symbol *sym, int funfirstline)
 	  !section_is_mapped (section))
 	pc = overlay_unmapped_address (pc, section);
 
-      pc += FUNCTION_START_OFFSET;
+      pc += DEPRECATED_FUNCTION_START_OFFSET;
       pc = SKIP_PROLOGUE (pc);
 
       /* For overlays, map pc back into its mapped VMA range */
@@ -2420,14 +2522,14 @@ operator_chars (char *p, char **end)
 	else if (p[1] == '[')
 	  {
 	    if (p[2] == ']')
-	      error ("mismatched quoting on brackets, try 'operator\\[\\]'");
+	      error (_("mismatched quoting on brackets, try 'operator\\[\\]'"));
 	    else if (p[2] == '\\' && p[3] == ']')
 	      {
 		*end = p + 4;	/* 'operator\[\]' */
 		return p;
 	      }
 	    else
-	      error ("nothing is allowed between '[' and ']'");
+	      error (_("nothing is allowed between '[' and ']'"));
 	  }
 	else 
 	  {
@@ -2483,21 +2585,21 @@ operator_chars (char *p, char **end)
 	return p;
       case '(':
 	if (p[1] != ')')
-	  error ("`operator ()' must be specified without whitespace in `()'");
+	  error (_("`operator ()' must be specified without whitespace in `()'"));
 	*end = p + 2;
 	return p;
       case '?':
 	if (p[1] != ':')
-	  error ("`operator ?:' must be specified without whitespace in `?:'");
+	  error (_("`operator ?:' must be specified without whitespace in `?:'"));
 	*end = p + 2;
 	return p;
       case '[':
 	if (p[1] != ']')
-	  error ("`operator []' must be specified without whitespace in `[]'");
+	  error (_("`operator []' must be specified without whitespace in `[]'"));
 	*end = p + 2;
 	return p;
       default:
-	error ("`operator %s' not supported", p);
+	error (_("`operator %s' not supported"), p);
 	break;
       }
 
@@ -2554,7 +2656,7 @@ filename_seen (const char *file, int add, int *first)
    NAME is the name to print and *FIRST is nonzero if this is the first
    name printed.  Set *FIRST to zero.  */
 static void
-output_source_filename (char *name, int *first)
+output_source_filename (const char *name, int *first)
 {
   /* Since a single source file can result in several partial symbol
      tables, we need to avoid printing it more than once.  Note: if
@@ -2595,7 +2697,7 @@ sources_info (char *ignore, int from_tty)
 
   if (!have_full_symbols () && !have_partial_symbols ())
     {
-      error ("No symbol table is loaded.  Use the \"file\" command.");
+      error (_("No symbol table is loaded.  Use the \"file\" command."));
     }
 
   printf_filtered ("Source files for which symbols have been read in:\n\n");
@@ -2603,7 +2705,8 @@ sources_info (char *ignore, int from_tty)
   first = 1;
   ALL_SYMTABS (objfile, s)
   {
-    output_source_filename (s->filename, &first);
+    const char *fullname = symtab_to_fullname (s);
+    output_source_filename (fullname ? fullname : s->filename, &first);
   }
   printf_filtered ("\n\n");
 
@@ -2614,7 +2717,8 @@ sources_info (char *ignore, int from_tty)
   {
     if (!ps->readin)
       {
-	output_source_filename (ps->filename, &first);
+	const char *fullname = psymtab_to_fullname (ps);
+	output_source_filename (fullname ? fullname : ps->filename, &first);
       }
   }
   printf_filtered ("\n");
@@ -2765,7 +2869,7 @@ search_symbols (char *regexp, domain_enum kind, int nfiles, char *files[],
   struct cleanup *old_chain = NULL;
 
   if (kind < VARIABLES_DOMAIN)
-    error ("must search on specific domain");
+    error (_("must search on specific domain"));
 
   ourtype = types[(int) (kind - VARIABLES_DOMAIN)];
   ourtype2 = types2[(int) (kind - VARIABLES_DOMAIN)];
@@ -2808,7 +2912,7 @@ search_symbols (char *regexp, domain_enum kind, int nfiles, char *files[],
 	}
 
       if (0 != (val = re_comp (regexp)))
-	error ("Invalid regexp (%s): %s", val, regexp);
+	error (_("Invalid regexp (%s): %s"), val, regexp);
     }
 
   /* Search through the partial symtabs *first* for all symbols
@@ -3068,12 +3172,12 @@ print_msymbol_info (struct minimal_symbol *msymbol)
   char *tmp;
 
   if (TARGET_ADDR_BIT <= 32)
-    tmp = local_hex_string_custom (SYMBOL_VALUE_ADDRESS (msymbol)
-				   & (CORE_ADDR) 0xffffffff,
-				   "08l");
+    tmp = hex_string_custom (SYMBOL_VALUE_ADDRESS (msymbol)
+			     & (CORE_ADDR) 0xffffffff,
+			     8);
   else
-    tmp = local_hex_string_custom (SYMBOL_VALUE_ADDRESS (msymbol),
-				   "016l");
+    tmp = hex_string_custom (SYMBOL_VALUE_ADDRESS (msymbol),
+			     16);
   printf_filtered ("%s  %s\n",
 		   tmp, SYMBOL_PRINT_NAME (msymbol));
 }
@@ -3921,7 +4025,7 @@ skip_prologue_using_sal (CORE_ADDR func_addr)
 
   /* Get an initial range for the function.  */
   find_pc_partial_function (func_addr, NULL, &start_pc, &end_pc);
-  start_pc += FUNCTION_START_OFFSET;
+  start_pc += DEPRECATED_FUNCTION_START_OFFSET;
 
   prologue_sal = find_pc_line (start_pc, 0);
   if (prologue_sal.line != 0)
@@ -3957,7 +4061,7 @@ decode_line_spec (char *string, int funfirstline)
   struct symtab_and_line cursal;
   
   if (string == 0)
-    error ("Empty line specification.");
+    error (_("Empty line specification."));
     
   /* We use whatever is set as the current source line. We do not try
      and get a default  or it will recursively call us! */  
@@ -3968,7 +4072,7 @@ decode_line_spec (char *string, int funfirstline)
 			(char ***) NULL, NULL);
 
   if (*string)
-    error ("Junk at end of line specification: %s", string);
+    error (_("Junk at end of line specification: %s"), string);
   return sals;
 }
 
@@ -3989,27 +4093,71 @@ set_main_name (const char *name)
     }
 }
 
+/* Deduce the name of the main procedure, and set NAME_OF_MAIN
+   accordingly.  */
+
+static void
+find_main_name (void)
+{
+  char *new_main_name;
+
+  /* Try to see if the main procedure is in Ada.  */
+  /* FIXME: brobecker/2005-03-07: Another way of doing this would
+     be to add a new method in the language vector, and call this
+     method for each language until one of them returns a non-empty
+     name.  This would allow us to remove this hard-coded call to
+     an Ada function.  It is not clear that this is a better approach
+     at this point, because all methods need to be written in a way
+     such that false positives never be returned. For instance, it is
+     important that a method does not return a wrong name for the main
+     procedure if the main procedure is actually written in a different
+     language.  It is easy to guaranty this with Ada, since we use a
+     special symbol generated only when the main in Ada to find the name
+     of the main procedure. It is difficult however to see how this can
+     be guarantied for languages such as C, for instance.  This suggests
+     that order of call for these methods becomes important, which means
+     a more complicated approach.  */
+  new_main_name = ada_main_name ();
+  if (new_main_name != NULL)
+    { 
+      set_main_name (new_main_name);
+      return;
+    }
+
+  /* The languages above didn't identify the name of the main procedure.
+     Fallback to "main".  */
+  set_main_name ("main");
+}
+
 char *
 main_name (void)
 {
-  if (name_of_main != NULL)
-    return name_of_main;
-  else
-    return "main";
+  if (name_of_main == NULL)
+    find_main_name ();
+
+  return name_of_main;
 }
 
+/* Handle ``executable_changed'' events for the symtab module.  */
+
+static void
+symtab_observer_executable_changed (void *unused)
+{
+  /* NAME_OF_MAIN may no longer be the same, so reset it for now.  */
+  set_main_name (NULL);
+}
 
 void
 _initialize_symtab (void)
 {
-  add_info ("variables", variables_info,
-	 "All global and static variable names, or those matching REGEXP.");
+  add_info ("variables", variables_info, _("\
+All global and static variable names, or those matching REGEXP."));
   if (dbx_commands)
-    add_com ("whereis", class_info, variables_info,
-	 "All global and static variable names, or those matching REGEXP.");
+    add_com ("whereis", class_info, variables_info, _("\
+All global and static variable names, or those matching REGEXP."));
 
   add_info ("functions", functions_info,
-	    "All function names, or those matching REGEXP.");
+	    _("All function names, or those matching REGEXP."));
 
   
   /* FIXME:  This command has at least the following problems:
@@ -4021,22 +4169,25 @@ _initialize_symtab (void)
      I also think "ptype" or "whatis" is more likely to be useful (but if
      there is much disagreement "info types" can be fixed).  */
   add_info ("types", types_info,
-	    "All type names, or those matching REGEXP.");
+	    _("All type names, or those matching REGEXP."));
 
   add_info ("sources", sources_info,
-	    "Source files in the program.");
+	    _("Source files in the program."));
 
   add_com ("rbreak", class_breakpoint, rbreak_command,
-	   "Set a breakpoint for all functions matching REGEXP.");
+	   _("Set a breakpoint for all functions matching REGEXP."));
 
   if (xdb_commands)
     {
-      add_com ("lf", class_info, sources_info, "Source files in the program");
-      add_com ("lg", class_info, variables_info,
-	 "All global and static variable names, or those matching REGEXP.");
+      add_com ("lf", class_info, sources_info,
+	       _("Source files in the program"));
+      add_com ("lg", class_info, variables_info, _("\
+All global and static variable names, or those matching REGEXP."));
     }
 
   /* Initialize the one built-in type that isn't language dependent... */
   builtin_type_error = init_type (TYPE_CODE_ERROR, 0, 0,
 				  "<unknown type>", (struct objfile *) NULL);
+
+  observer_attach_executable_changed (symtab_observer_executable_changed);
 }

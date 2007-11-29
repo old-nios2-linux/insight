@@ -1,5 +1,5 @@
 /* Simulator option handling.
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 2004 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -115,6 +115,7 @@ typedef enum {
 #endif
   OPTION_LOAD_LMA,
   OPTION_LOAD_VMA,
+  OPTION_SYSROOT
 } STANDARD_OPTIONS;
 
 static const OPTION standard_options[] =
@@ -204,6 +205,11 @@ static const OPTION standard_options[] =
   { {"load-vma", no_argument, NULL, OPTION_LOAD_VMA},
       '\0', NULL, "", standard_option_handler,  "" },
 #endif
+
+  { {"sysroot", required_argument, NULL, OPTION_SYSROOT},
+      '\0', "SYSROOT",
+    "Root for system calls with absolute file-names and cwd at start",
+      standard_option_handler },
 
   { {NULL, no_argument, NULL, 0}, '\0', NULL, NULL, NULL }
 };
@@ -440,6 +446,14 @@ standard_option_handler (SIM_DESC sd, sim_cpu *cpu, int opt,
       if (STATE_OPEN_KIND (sd) == SIM_OPEN_STANDALONE)
 	exit (0);
       /* FIXME: 'twould be nice to do something similar if gdb.  */
+      break;
+
+    case OPTION_SYSROOT:
+      /* Don't leak memory in the odd event that there's lots of
+	 --sysroot=... options.  */
+      if (simulator_sysroot[0] != '\0' && arg[0] != '\0')
+	free (simulator_sysroot);
+      simulator_sysroot = xstrdup (arg);
       break;
     }
 
@@ -898,7 +912,7 @@ sim_args_command (SIM_DESC sd, char *cmd)
 {
   /* something to do? */
   if (cmd == NULL)
-    return SIM_RC_OK; /* FIXME - perhaphs help would be better */
+    return SIM_RC_OK; /* FIXME - perhaps help would be better */
   
   if (cmd [0] == '-')
     {
@@ -916,7 +930,7 @@ sim_args_command (SIM_DESC sd, char *cmd)
       sim_cpu *cpu;
 
       if (argv [0] == NULL)
-	return SIM_RC_OK; /* FIXME - perhaphs help would be better */
+	return SIM_RC_OK; /* FIXME - perhaps help would be better */
 
       /* First check for a cpu selector.  */
       {

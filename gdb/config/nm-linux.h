@@ -1,6 +1,7 @@
 /* Native support for GNU/Linux.
 
-   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,9 +25,6 @@ struct target_ops;
 /* GNU/Linux is SVR4-ish but its /proc file system isn't.  */
 #undef USE_PROC_FS
 
-/* Tell GDB that we can attach and detach other processes.  */
-#define ATTACH_DETACH
-
 /* Since we're building a native debugger, we can include <signal.h>
    to find the range of real-time signals.  */
 
@@ -41,15 +39,9 @@ struct target_ops;
    style shared libraries.  */
 
 #ifdef HAVE_LINK_H
-#define SVR4_SHARED_LIBS
 #include "solib.h"             /* Support for shared libraries.  */
 #endif
 
-
-/* Override child_wait in `inftarg.c'.  */
-struct target_waitstatus;
-extern ptid_t child_wait (ptid_t ptid, struct target_waitstatus *ourstatus);
-#define CHILD_WAIT
 
 extern void lin_lwp_attach_lwp (ptid_t ptid, int verbose);
 #define ATTACH_LWP(ptid, verbose) lin_lwp_attach_lwp ((ptid), (verbose))
@@ -57,26 +49,8 @@ extern void lin_lwp_attach_lwp (ptid_t ptid, int verbose);
 extern void lin_thread_get_thread_signals (sigset_t *mask);
 #define GET_THREAD_SIGNALS(mask) lin_thread_get_thread_signals (mask)
 
-/* Defined to make stepping-over-breakpoints be thread-atomic.  */
-#define USE_THREAD_STEP_NEEDED 1
-
-
 /* Use elf_gregset_t and elf_fpregset_t, rather than
    gregset_t and fpregset_t.  */
 
 #define GDB_GREGSET_T  elf_gregset_t
 #define GDB_FPREGSET_T elf_fpregset_t
-
-/* Override child_pid_to_exec_file in 'inftarg.c'.  */
-#define CHILD_PID_TO_EXEC_FILE
-
-#define CHILD_INSERT_FORK_CATCHPOINT
-#define CHILD_INSERT_VFORK_CATCHPOINT
-#define CHILD_INSERT_EXEC_CATCHPOINT
-#define CHILD_POST_STARTUP_INFERIOR
-#define CHILD_POST_ATTACH
-#define CHILD_FOLLOW_FORK
-#define KILL_INFERIOR
-
-#define NATIVE_XFER_AUXV	procfs_xfer_auxv
-#include "auxv.h"		/* Declares it. */

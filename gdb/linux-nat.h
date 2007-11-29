@@ -1,5 +1,7 @@
 /* Native debugging support for GNU/Linux (LWP layer).
-   Copyright 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+
+   Copyright 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +19,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
+
+#include "target.h"
 
 /* Structure describing an LWP.  */
 
@@ -52,19 +56,15 @@ struct lwp_info
   /* Non-zero if we were stepping this LWP.  */
   int step;
 
+  /* If WAITSTATUS->KIND != TARGET_WAITKIND_SPURIOUS, the waitstatus
+     for this LWP's last event.  This may correspond to STATUS above,
+     or to a local variable in lin_lwp_wait.  */
+  struct target_waitstatus waitstatus;
+
   /* Next LWP in list.  */
   struct lwp_info *next;
 };
 
-/* Read/write to target memory via the Linux kernel's "proc file
-   system".  */
-struct mem_attrib;
-struct target_ops;
-struct target_waitstatus;
-
-extern int linux_proc_xfer_memory (CORE_ADDR addr, char *myaddr, int len,
-				   int write, struct mem_attrib *attrib,
-				   struct target_ops *target);
 
 /* Find process PID's pending signal set from /proc/pid/status.  */
 void linux_proc_pending_signals (int pid, sigset_t *pending, sigset_t *blocked, sigset_t *ignored);
@@ -74,9 +74,12 @@ extern void linux_record_stopped_pid (int pid);
 extern void linux_enable_event_reporting (ptid_t ptid);
 extern ptid_t linux_handle_extended_wait (int pid, int status,
 					  struct target_waitstatus *ourstatus);
-extern void linux_child_post_startup_inferior (ptid_t ptid);
 
 /* Iterator function for lin-lwp's lwp list.  */
 struct lwp_info *iterate_over_lwps (int (*callback) (struct lwp_info *, 
 						     void *), 
 				    void *data);
+
+/* Create a prototype generic Linux target.  The client can override
+   it with local methods.  */
+struct target_ops * linux_target (void);

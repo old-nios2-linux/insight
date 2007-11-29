@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
+Copyright 1996-2005 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -18,7 +18,7 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along
 with this program; if not, write to the Free Software Foundation, Inc.,
-59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
 
 */
 
@@ -36,6 +36,10 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 typedef struct {
   /* Hardware elements.  */
   struct {
+  /* relocation annotation */
+  BI h_reloc_ann;
+#define GET_H_RELOC_ANN() CPU (h_reloc_ann)
+#define SET_H_RELOC_ANN(x) (CPU (h_reloc_ann) = (x))
   /* program counter */
   USI h_pc;
 #define GET_H_PC() CPU (h_pc)
@@ -267,6 +271,8 @@ SET_H_SPR (((UINT) 281), TRUNCDISI ((x)));\
 ;} while (0)
 
 /* Cover fns for register access.  */
+BI frvbf_h_reloc_ann_get (SIM_CPU *);
+void frvbf_h_reloc_ann_set (SIM_CPU *, BI);
 USI frvbf_h_pc_get (SIM_CPU *);
 void frvbf_h_pc_set (SIM_CPU *, USI);
 UQI frvbf_h_psr_imple_get (SIM_CPU *);
@@ -396,6 +402,19 @@ typedef struct {
   DI cur_acc_p2;
   DI cur_acc_p4;
 } MODEL_FR400_DATA;
+
+typedef struct {
+  DI prev_fp_load;
+  DI prev_fr_p4;
+  DI prev_fr_p6;
+  DI prev_acc_p2;
+  DI prev_acc_p4;
+  DI cur_fp_load;
+  DI cur_fr_p4;
+  DI cur_fr_p6;
+  DI cur_acc_p2;
+  DI cur_acc_p4;
+} MODEL_FR450_DATA;
 
 typedef struct {
   int empty;
@@ -1261,6 +1280,23 @@ union sem_fields {
     unsigned char out_h_fr_hi_UHI_add__DFLT_index_of__DFLT_FRintk_0;
     unsigned char out_h_fr_lo_UHI_add__DFLT_index_of__DFLT_FRintk_0;
   } sfmt_cmaddhss;
+  struct { /*  */
+    UINT f_FRi;
+    UINT f_FRk;
+    UINT f_u6;
+    unsigned char in_FRintieven;
+    unsigned char in_FRintkeven;
+    unsigned char in_h_fr_hi_UHI_add__DFLT_index_of__DFLT_FRintieven_0;
+    unsigned char in_h_fr_hi_UHI_add__DFLT_index_of__DFLT_FRintieven_1;
+    unsigned char in_h_fr_lo_UHI_add__DFLT_index_of__DFLT_FRintieven_0;
+    unsigned char in_h_fr_lo_UHI_add__DFLT_index_of__DFLT_FRintieven_1;
+    unsigned char out_FRintieven;
+    unsigned char out_FRintkeven;
+    unsigned char out_h_fr_hi_UHI_add__DFLT_index_of__DFLT_FRintkeven_0;
+    unsigned char out_h_fr_hi_UHI_add__DFLT_index_of__DFLT_FRintkeven_1;
+    unsigned char out_h_fr_lo_UHI_add__DFLT_index_of__DFLT_FRintkeven_0;
+    unsigned char out_h_fr_lo_UHI_add__DFLT_index_of__DFLT_FRintkeven_1;
+  } sfmt_mqsllhi;
   struct { /*  */
     UINT f_FRi;
     UINT f_FRj;
@@ -3149,6 +3185,50 @@ struct scache {
   f_ope1 = EXTRACT_LSB0_UINT (insn, 32, 11, 6); \
   f_GRj_null = EXTRACT_LSB0_UINT (insn, 32, 5, 6); \
 
+#define EXTRACT_IFMT_LRAI_VARS \
+  UINT f_pack; \
+  UINT f_GRk; \
+  UINT f_op; \
+  UINT f_GRi; \
+  UINT f_ope1; \
+  UINT f_LRAE; \
+  UINT f_LRAD; \
+  UINT f_LRAS; \
+  UINT f_LRA_null; \
+  unsigned int length;
+#define EXTRACT_IFMT_LRAI_CODE \
+  length = 4; \
+  f_pack = EXTRACT_LSB0_UINT (insn, 32, 31, 1); \
+  f_GRk = EXTRACT_LSB0_UINT (insn, 32, 30, 6); \
+  f_op = EXTRACT_LSB0_UINT (insn, 32, 24, 7); \
+  f_GRi = EXTRACT_LSB0_UINT (insn, 32, 17, 6); \
+  f_ope1 = EXTRACT_LSB0_UINT (insn, 32, 11, 6); \
+  f_LRAE = EXTRACT_LSB0_UINT (insn, 32, 5, 1); \
+  f_LRAD = EXTRACT_LSB0_UINT (insn, 32, 4, 1); \
+  f_LRAS = EXTRACT_LSB0_UINT (insn, 32, 3, 1); \
+  f_LRA_null = EXTRACT_LSB0_UINT (insn, 32, 2, 3); \
+
+#define EXTRACT_IFMT_TLBPR_VARS \
+  UINT f_pack; \
+  UINT f_TLBPR_null; \
+  UINT f_TLBPRopx; \
+  UINT f_TLBPRL; \
+  UINT f_op; \
+  UINT f_GRi; \
+  UINT f_ope1; \
+  UINT f_GRj; \
+  unsigned int length;
+#define EXTRACT_IFMT_TLBPR_CODE \
+  length = 4; \
+  f_pack = EXTRACT_LSB0_UINT (insn, 32, 31, 1); \
+  f_TLBPR_null = EXTRACT_LSB0_UINT (insn, 32, 30, 2); \
+  f_TLBPRopx = EXTRACT_LSB0_UINT (insn, 32, 28, 3); \
+  f_TLBPRL = EXTRACT_LSB0_UINT (insn, 32, 25, 1); \
+  f_op = EXTRACT_LSB0_UINT (insn, 32, 24, 7); \
+  f_GRi = EXTRACT_LSB0_UINT (insn, 32, 17, 6); \
+  f_ope1 = EXTRACT_LSB0_UINT (insn, 32, 11, 6); \
+  f_GRj = EXTRACT_LSB0_UINT (insn, 32, 5, 6); \
+
 #define EXTRACT_IFMT_COP1_VARS \
   UINT f_pack; \
   UINT f_CPRk; \
@@ -3835,6 +3915,23 @@ struct scache {
   f_cond = EXTRACT_LSB0_UINT (insn, 32, 8, 1); \
   f_ope4 = EXTRACT_LSB0_UINT (insn, 32, 7, 2); \
   f_FRj = EXTRACT_LSB0_UINT (insn, 32, 5, 6); \
+
+#define EXTRACT_IFMT_MQSLLHI_VARS \
+  UINT f_pack; \
+  UINT f_FRk; \
+  UINT f_op; \
+  UINT f_FRi; \
+  UINT f_ope1; \
+  UINT f_u6; \
+  unsigned int length;
+#define EXTRACT_IFMT_MQSLLHI_CODE \
+  length = 4; \
+  f_pack = EXTRACT_LSB0_UINT (insn, 32, 31, 1); \
+  f_FRk = EXTRACT_LSB0_UINT (insn, 32, 30, 6); \
+  f_op = EXTRACT_LSB0_UINT (insn, 32, 24, 7); \
+  f_FRi = EXTRACT_LSB0_UINT (insn, 32, 17, 6); \
+  f_ope1 = EXTRACT_LSB0_UINT (insn, 32, 11, 6); \
+  f_u6 = EXTRACT_LSB0_UINT (insn, 32, 5, 6); \
 
 #define EXTRACT_IFMT_MADDACCS_VARS \
   UINT f_pack; \

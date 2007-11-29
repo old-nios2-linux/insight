@@ -23,11 +23,8 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 
 #include "sim-options.h"
 
-/* Not defined in the cgen cpu file for access restriction purposes.  */
-#define H_SPR_ACC4   1412
-#define H_SPR_ACC63  1471
-#define H_SPR_ACCG4  1476
-#define H_SPR_ACCG63 1535
+/* True if SPR is the number of accumulator or accumulator guard register.  */
+#define SPR_IS_ACC(SPR) ((SPR) >= 1408 && (SPR) <= 1535)
 
 /* Initialization of the frv cpu.  */
 void frv_initialize (SIM_CPU *, SIM_DESC);
@@ -146,7 +143,7 @@ struct _device { int foo; };
 
 /* maintain the address of the start of the previous VLIW insn sequence.  */
 extern IADDR previous_vliw_pc;
-extern CGEN_ATTR_VALUE_TYPE frv_current_fm_slot;
+extern CGEN_ATTR_VALUE_ENUM_TYPE frv_current_fm_slot;
 
 /* Hardware status.  */
 #define GET_HSR0() GET_H_SPR (H_SPR_HSR0)

@@ -93,7 +93,7 @@ proc sim_run { prog sim_opts prog_opts redir options } {
 	set prog [remote_download host $prog]
 	if { $prog == "" } {
 	    error "download failed"
-	    return -1;
+	    return -1
 	}
     }
 
@@ -109,12 +109,19 @@ proc sim_run { prog sim_opts prog_opts redir options } {
 	set sim "env $testcase_env $sim"
     }
 
-    send_log "$sim $always_opts $SIMFLAGS $sim_opts $prog $prog_opts\n"
+    if { [board_info target sim,protocol] == "sid" } {
+	set cmd ""
+	set sim_opts "$sim_opts -e \"set cpu-loader file [list ${prog}]\""
+    } else {
+	set cmd "$prog"
+    }
+
+    send_log "$sim $always_opts $SIMFLAGS $sim_opts $cmd $prog_opts\n"
 
     if { "$redir" == "" } {
-	remote_spawn host "$sim $always_opts $SIMFLAGS $sim_opts $prog $prog_opts"
+	remote_spawn host "$sim $always_opts $SIMFLAGS $sim_opts $cmd $prog_opts"
     } else {
-	remote_spawn host "$sim $always_opts $SIMFLAGS $sim_opts $prog $prog_opts $redir" writeonly
+	remote_spawn host "$sim $always_opts $SIMFLAGS $sim_opts $cmd $prog_opts $redir" writeonly
     }
     set result [remote_wait host $testcase_timeout]
 
@@ -156,15 +163,24 @@ proc sim_run { prog sim_opts prog_opts redir options } {
 # sim[(mach-list)]: <simulator options>
 # output: program output pattern to match with string-match
 # xerror: program is expected to return with a "failure" exit code
+# xfail: <PRMS-opt> <target-triplets-where-test-fails>
+# kfail: <PRMS> <target-triplets-where-test-fails>
 # If `output' is not specified, the program must output "pass" if !xerror or
 # "fail" if xerror.
 # The parens in "optname()" are optional if the specification is for all machs.
+# Multiple "output", "xfail" and "kfail" options concatenate.
+# The xfail and kfail arguments are space-separated target triplets and PRIDs.
+# There must be a PRMS (bug report ID) specified for kfail, while it's
+# optional for xfail.
 
 proc run_sim_test { name requested_machs } {
     global subdir srcdir
     global SIMFLAGS
     global opts
     global cpu_option
+    global global_as_options
+    global global_ld_options
+    global global_sim_options
 
     if [string match "*/*" $name] {
 	set file $name
@@ -186,6 +202,18 @@ proc run_sim_test { name requested_machs } {
     set opts(mach) ""
     set opts(timeout) ""
     set opts(xerror) "no"
+    set opts(xfail) ""
+    set opts(kfail) ""
+
+    if ![info exists global_as_options] {
+        set global_as_options ""
+    }
+    if ![info exists global_ld_options] {
+        set global_ld_options ""
+    }
+    if ![info exists global_sim_options] {
+        set global_sim_options ""
+    }
 
     # Clear any machine specific options specified in a previous test case
     foreach m $requested_machs {
@@ -209,6 +237,15 @@ proc run_sim_test { name requested_machs } {
 	    unresolved $subdir/$name
 	    return
 	}
+	# Multiple "output" specifications concatenate, they don't override.
+	if { $opt_name == "output" } {
+	    set opt_val "$opts(output)$opt_val"
+	}
+	# Similar with "xfail" and "kfail", but arguments are space-separated.
+	if { $opt_name == "xfail" || $opt_name == "kfail" } {
+	    set opt_val "$opts($opt_name) $opt_val"
+	}
+
 	foreach m $opt_machs {
 	    set opts($opt_name,$m) $opt_val
 	}
@@ -242,6 +279,18 @@ proc run_sim_test { name requested_machs } {
 
 	verbose -log "Testing $name on machine $mach."
 
+	# Time to setup xfailures and kfailures.
+	if { "$opts(xfail)" != "" } {
+	    verbose -log "xfail: $opts(xfail)"
+	    # Using eval to make $opts(xfail) appear as individual
+	    # arguments.
+	    eval setup_xfail $opts(xfail)
+	}
+	if { "$opts(kfail)" != "" } {
+	    verbose -log "kfail: $opts(kfail)"
+	    eval setup_kfail $opts(kfail)
+	}
+
 	if ![info exists opts(as,$mach)] {
 	    set opts(as,$mach) $opts(as)
 	}
@@ -250,7 +299,7 @@ proc run_sim_test { name requested_machs } {
 	if [info exists cpu_option] {
 	    set as_options "$as_options $cpu_option=$mach"
 	}
-	set comp_output [target_assemble $sourcefile ${name}.o "$as_options"]
+	set comp_output [target_assemble $sourcefile ${name}.o "$as_options $global_as_options"]
 
 	if ![string match "" $comp_output] {
 	    verbose -log "$comp_output" 3
@@ -262,7 +311,7 @@ proc run_sim_test { name requested_machs } {
 	    set opts(ld,$mach) $opts(ld)
 	}
 
-	set comp_output [target_link ${name}.o ${name}.x "$opts(ld,$mach)"]
+	set comp_output [target_link ${name}.o ${name}.x "$opts(ld,$mach) $global_ld_options"]
 
 	if ![string match "" $comp_output] {
 	    verbose -log "$comp_output" 3
@@ -281,7 +330,7 @@ proc run_sim_test { name requested_machs } {
 	    set options "$options timeout=$opts(timeout)"
 	}
 
-	set result [sim_run ${name}.x "$opts(sim,$mach)" "" "" "$options"]
+	set result [sim_run ${name}.x "$opts(sim,$mach) $global_sim_options" "" "" "$options"]
 	set status [lindex $result 0]
 	set output [lindex $result 1]
 

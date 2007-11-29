@@ -1,6 +1,6 @@
 /* Native support for GNU/Linux x86-64.
 
-   Copyright 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
 
    Contributed by Jiri Smid, SuSE Labs.
 
@@ -52,18 +52,7 @@ extern unsigned long amd64_linux_dr_get_status (void);
   amd64_linux_dr_get_status ()
 
 
-/* Type of the third argument to the `ptrace' system call.  */
-#define PTRACE_ARG3_TYPE long
-
-/* Type of the fourth argument to the `ptrace' system call.  */
-#define PTRACE_XFER_TYPE long
-
 /* Override copies of {fetch,store}_inferior_registers in `infptrace.c'.  */
 #define FETCH_INFERIOR_REGISTERS
-
-/* `linux-nat.c' and `i386-nat.c' have their own versions of
-   child_post_startup_inferior.  Define this to use the copy in
-   `x86-86-linux-nat.c' instead, which calls both.  */
-#define LINUX_CHILD_POST_STARTUP_INFERIOR
 
 #endif /* nm-linux64.h */

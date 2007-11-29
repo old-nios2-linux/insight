@@ -1,7 +1,7 @@
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003 Free Software Foundation,
-   Inc.
+   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005
+   Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,7 @@
 #include "regcache.h"
 #include "gdb_assert.h"
 #include "sim-regno.h"
-
+#include "gdbcore.h"
 #include "osabi.h"
 
 #include "version.h"
@@ -41,10 +41,10 @@
    register cache.  */
 void
 legacy_extract_return_value (struct type *type, struct regcache *regcache,
-			     void *valbuf)
+			     gdb_byte *valbuf)
 {
-  char *registers = deprecated_grub_regcache_for_registers (regcache);
-  bfd_byte *buf = valbuf;
+  gdb_byte *registers = deprecated_grub_regcache_for_registers (regcache);
+  gdb_byte *buf = valbuf;
   DEPRECATED_EXTRACT_RETURN_VALUE (type, registers, buf); /* OK */
 }
 
@@ -52,14 +52,13 @@ legacy_extract_return_value (struct type *type, struct regcache *regcache,
    Takes a local copy of the buffer to avoid const problems.  */
 void
 legacy_store_return_value (struct type *type, struct regcache *regcache,
-			   const void *buf)
+			   const gdb_byte *buf)
 {
-  bfd_byte *b = alloca (TYPE_LENGTH (type));
+  gdb_byte *b = alloca (TYPE_LENGTH (type));
   gdb_assert (regcache == current_regcache);
   memcpy (b, buf, TYPE_LENGTH (type));
   DEPRECATED_STORE_RETURN_VALUE (type, b);
 }
-
 
 int
 always_use_struct_convention (int gcc_p, struct type *value_type)
@@ -67,6 +66,40 @@ always_use_struct_convention (int gcc_p, struct type *value_type)
   return 1;
 }
 
+enum return_value_convention
+legacy_return_value (struct gdbarch *gdbarch, struct type *valtype,
+		     struct regcache *regcache, gdb_byte *readbuf,
+		     const gdb_byte *writebuf)
+{
+  /* NOTE: cagney/2004-06-13: The gcc_p parameter to
+     USE_STRUCT_CONVENTION isn't used.  */
+  int struct_return = ((TYPE_CODE (valtype) == TYPE_CODE_STRUCT
+			|| TYPE_CODE (valtype) == TYPE_CODE_UNION
+			|| TYPE_CODE (valtype) == TYPE_CODE_ARRAY)
+		       && DEPRECATED_USE_STRUCT_CONVENTION (0, valtype));
+
+  if (writebuf != NULL)
+    {
+      gdb_assert (!struct_return);
+      /* NOTE: cagney/2004-06-13: See stack.c:return_command.  Old
+	 architectures don't expect STORE_RETURN_VALUE to handle small
+	 structures.  Should not be called with such types.  */
+      gdb_assert (TYPE_CODE (valtype) != TYPE_CODE_STRUCT
+		  && TYPE_CODE (valtype) != TYPE_CODE_UNION);
+      STORE_RETURN_VALUE (valtype, regcache, writebuf);
+    }
+
+  if (readbuf != NULL)
+    {
+      gdb_assert (!struct_return);
+      EXTRACT_RETURN_VALUE (valtype, regcache, readbuf);
+    }
+
+  if (struct_return)
+    return RETURN_VALUE_STRUCT_CONVENTION;
+  else
+    return RETURN_VALUE_REGISTER_CONVENTION;
+}
 
 int
 legacy_register_sim_regno (int regnum)
@@ -84,12 +117,6 @@ legacy_register_sim_regno (int regnum)
     return LEGACY_SIM_REGNO_IGNORE;
 }
 
-int
-generic_return_value_on_stack_not (struct type *type)
-{
-  return 0;
-}
-
 CORE_ADDR
 generic_skip_trampoline_code (CORE_ADDR pc)
 {
@@ -98,12 +125,6 @@ generic_skip_trampoline_code (CORE_ADDR pc)
 
 CORE_ADDR
 generic_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
-{
-  return 0;
-}
-
-int
-generic_in_solib_call_trampoline (CORE_ADDR pc, char *name)
 {
   return 0;
 }
@@ -119,13 +140,6 @@ generic_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   return 0;
 }
-
-#if defined (CALL_DUMMY)
-LONGEST legacy_call_dummy_words[] = CALL_DUMMY;
-#else
-LONGEST legacy_call_dummy_words[1];
-#endif
-int legacy_sizeof_call_dummy_words = sizeof (legacy_call_dummy_words);
 
 void
 generic_remote_translate_xfer_address (struct gdbarch *gdbarch,
@@ -166,7 +180,7 @@ default_float_format (struct gdbarch *gdbarch)
       return &floatformat_ieee_single_little;
     default:
       internal_error (__FILE__, __LINE__,
-		      "default_float_format: bad byte order");
+		      _("default_float_format: bad byte order"));
     }
 }
 
@@ -183,7 +197,7 @@ default_double_format (struct gdbarch *gdbarch)
       return &floatformat_ieee_double_little;
     default:
       internal_error (__FILE__, __LINE__,
-		      "default_double_format: bad byte order");
+		      _("default_double_format: bad byte order"));
     }
 }
 
@@ -206,17 +220,6 @@ int
 no_op_reg_to_regnum (int reg)
 {
   return reg;
-}
-
-CORE_ADDR
-deprecated_init_frame_pc_default (int fromleaf, struct frame_info *prev)
-{
-  if (fromleaf && DEPRECATED_SAVED_PC_AFTER_CALL_P ())
-    return DEPRECATED_SAVED_PC_AFTER_CALL (get_next_frame (prev));
-  else if (get_next_frame (prev) != NULL)
-    return DEPRECATED_FRAME_SAVED_PC (get_next_frame (prev));
-  else
-    return read_pc ();
 }
 
 void
@@ -258,7 +261,7 @@ legacy_virtual_frame_pointer (CORE_ADDR pc,
   else
     /* Should this be an internal error?  I guess so, it is reflecting
        an architectural limitation in the current design.  */
-    internal_error (__FILE__, __LINE__, "No virtual frame pointer available");
+    internal_error (__FILE__, __LINE__, _("No virtual frame pointer available"));
   *frame_offset = 0;
 }
 
@@ -269,13 +272,7 @@ int
 generic_register_size (int regnum)
 {
   gdb_assert (regnum >= 0 && regnum < NUM_REGS + NUM_PSEUDO_REGS);
-  if (gdbarch_register_type_p (current_gdbarch))
-    return TYPE_LENGTH (gdbarch_register_type (current_gdbarch, regnum));
-  else
-    /* FIXME: cagney/2003-03-01: Once all architectures implement
-       gdbarch_register_type(), this entire function can go away.  It
-       is made obsolete by register_size().  */
-    return TYPE_LENGTH (DEPRECATED_REGISTER_VIRTUAL_TYPE (regnum)); /* OK */
+  return TYPE_LENGTH (gdbarch_register_type (current_gdbarch, regnum));
 }
 
 /* Assume all registers are adjacent.  */
@@ -298,41 +295,17 @@ generic_register_byte (int regnum)
 int
 legacy_pc_in_sigtramp (CORE_ADDR pc, char *name)
 {
-#if !defined (IN_SIGTRAMP)
-  if (SIGTRAMP_START_P ())
-    return (pc) >= SIGTRAMP_START (pc) && (pc) < SIGTRAMP_END (pc);
-  else
-    return name && strcmp ("_sigtramp", name) == 0;
+#if defined (DEPRECATED_IN_SIGTRAMP)
+  return DEPRECATED_IN_SIGTRAMP (pc, name);
 #else
-  return IN_SIGTRAMP (pc, name);
+  return name && strcmp ("_sigtramp", name) == 0;
 #endif
 }
 
 int
-legacy_convert_register_p (int regnum, struct type *type)
+generic_convert_register_p (int regnum, struct type *type)
 {
-  return (DEPRECATED_REGISTER_CONVERTIBLE_P ()
-	  && DEPRECATED_REGISTER_CONVERTIBLE (regnum));
-}
-
-void
-legacy_register_to_value (struct frame_info *frame, int regnum,
-			  struct type *type, void *to)
-{
-  char from[MAX_REGISTER_SIZE];
-  get_frame_register (frame, regnum, from);
-  DEPRECATED_REGISTER_CONVERT_TO_VIRTUAL (regnum, type, from, to);
-}
-
-void
-legacy_value_to_register (struct frame_info *frame, int regnum,
-			  struct type *type, const void *tmp)
-{
-  char to[MAX_REGISTER_SIZE];
-  char *from = alloca (TYPE_LENGTH (type));
-  memcpy (from, from, TYPE_LENGTH (type));
-  DEPRECATED_REGISTER_CONVERT_TO_RAW (type, regnum, from, to);
-  put_frame_register (frame, regnum, to);
+  return 0;
 }
 
 int
@@ -349,6 +322,13 @@ default_stabs_argument_has_addr (struct gdbarch *gdbarch, struct type *type)
 	      || TYPE_CODE (type) == TYPE_CODE_BITSTRING);
     }
 
+  return 0;
+}
+
+int
+generic_instruction_nullified (struct gdbarch *gdbarch,
+			       struct regcache *regcache)
+{
   return 0;
 }
 
@@ -389,14 +369,23 @@ static const char *set_endian_string;
 /* Called by ``show endian''.  */
 
 static void
-show_endian (char *args, int from_tty)
+show_endian (struct ui_file *file, int from_tty, struct cmd_list_element *c,
+	     const char *value)
 {
   if (target_byte_order_auto)
-    printf_unfiltered ("The target endianness is set automatically (currently %s endian)\n",
-		       (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG ? "big" : "little"));
+    if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
+      fprintf_unfiltered (file, _("The target endianness is set automatically "
+				  "(currently big endian)\n"));
+    else
+      fprintf_unfiltered (file, _("The target endianness is set automatically "
+			   "(currently little endian)\n"));
   else
-    printf_unfiltered ("The target is assumed to be %s endian\n",
-		       (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG ? "big" : "little"));
+    if (TARGET_BYTE_ORDER == BFD_ENDIAN_BIG)
+      fprintf_unfiltered (file,
+			  _("The target is assumed to be big endian\n"));
+    else
+      fprintf_unfiltered (file,
+			  _("The target is assumed to be little endian\n"));
 }
 
 static void
@@ -413,7 +402,7 @@ set_endian (char *ignore_args, int from_tty, struct cmd_list_element *c)
       gdbarch_info_init (&info);
       info.byte_order = BFD_ENDIAN_LITTLE;
       if (! gdbarch_update_p (info))
-	printf_unfiltered ("Little endian target not supported by GDB\n");
+	printf_unfiltered (_("Little endian target not supported by GDB\n"));
     }
   else if (set_endian_string == endian_big)
     {
@@ -422,12 +411,12 @@ set_endian (char *ignore_args, int from_tty, struct cmd_list_element *c)
       gdbarch_info_init (&info);
       info.byte_order = BFD_ENDIAN_BIG;
       if (! gdbarch_update_p (info))
-	printf_unfiltered ("Big endian target not supported by GDB\n");
+	printf_unfiltered (_("Big endian target not supported by GDB\n"));
     }
   else
     internal_error (__FILE__, __LINE__,
-		    "set_endian: bad value");
-  show_endian (NULL, from_tty);
+		    _("set_endian: bad value"));
+  show_endian (gdb_stdout, from_tty, NULL, NULL);
 }
 
 /* Functions to manipulate the architecture of the target */
@@ -451,14 +440,17 @@ selected_architecture_name (void)
    argument. */
 
 static void
-show_architecture (char *args, int from_tty)
+show_architecture (struct ui_file *file, int from_tty,
+		   struct cmd_list_element *c, const char *value)
 {
   const char *arch;
   arch = TARGET_ARCHITECTURE->printable_name;
   if (target_architecture_auto)
-    printf_filtered ("The target architecture is set automatically (currently %s)\n", arch);
+    fprintf_filtered (file, _("\
+The target architecture is set automatically (currently %s)\n"), arch);
   else
-    printf_filtered ("The target architecture is assumed to be %s\n", arch);
+    fprintf_filtered (file, _("\
+The target architecture is assumed to be %s\n"), arch);
 }
 
 
@@ -479,14 +471,14 @@ set_architecture (char *ignore_args, int from_tty, struct cmd_list_element *c)
       info.bfd_arch_info = bfd_scan_arch (set_architecture_string);
       if (info.bfd_arch_info == NULL)
 	internal_error (__FILE__, __LINE__,
-			"set_architecture: bfd_scan_arch failed");
+			_("set_architecture: bfd_scan_arch failed"));
       if (gdbarch_update_p (info))
 	target_architecture_auto = 0;
       else
-	printf_unfiltered ("Architecture `%s' not recognized.\n",
+	printf_unfiltered (_("Architecture `%s' not recognized.\n"),
 			   set_architecture_string);
     }
-  show_architecture (NULL, from_tty);
+  show_architecture (gdb_stdout, from_tty, NULL, NULL);
 }
 
 /* Try to select a global architecture that matches "info".  Return
@@ -553,7 +545,7 @@ set_gdbarch_from_file (bfd *abfd)
 
   gdbarch = gdbarch_from_bfd (abfd);
   if (gdbarch == NULL)
-    error ("Architecture of file not recognized.\n");
+    error (_("Architecture of file not recognized."));
   deprecated_current_gdbarch_select_hack (gdbarch);
 }
 
@@ -601,11 +593,11 @@ initialize_current_architecture (void)
 	}
       if (chosen == NULL)
 	internal_error (__FILE__, __LINE__,
-			"initialize_current_architecture: No arch");
+			_("initialize_current_architecture: No arch"));
       info.bfd_arch_info = bfd_scan_arch (chosen);
       if (info.bfd_arch_info == NULL)
 	internal_error (__FILE__, __LINE__,
-			"initialize_current_architecture: Arch not found");
+			_("initialize_current_architecture: Arch not found"));
     }
 
   /* Take several guesses at a byte order.  */
@@ -643,7 +635,8 @@ initialize_current_architecture (void)
 
   if (! gdbarch_update_p (info))
     internal_error (__FILE__, __LINE__,
-		    "initialize_current_architecture: Selection of initial architecture failed");
+		    _("initialize_current_architecture: Selection of "
+		      "initial architecture failed"));
 
   /* Create the ``set architecture'' command appending ``auto'' to the
      list of architectures. */
@@ -655,19 +648,13 @@ initialize_current_architecture (void)
     arches = xrealloc (arches, sizeof (char*) * (nr + 2));
     arches[nr + 0] = "auto";
     arches[nr + 1] = NULL;
-    /* FIXME: add_set_enum_cmd() uses an array of ``char *'' instead
-       of ``const char *''.  We just happen to know that the casts are
-       safe. */
-    c = add_set_enum_cmd ("architecture", class_support,
-			  arches, &set_architecture_string,
-			  "Set architecture of target.",
-			  &setlist);
-    set_cmd_sfunc (c, set_architecture);
+    add_setshow_enum_cmd ("architecture", class_support,
+			  arches, &set_architecture_string, _("\
+Set architecture of target."), _("\
+Show architecture of target."), NULL,
+			  set_architecture, show_architecture,
+			  &setlist, &showlist);
     add_alias_cmd ("processor", "architecture", class_support, 1, &setlist);
-    /* Don't use set_from_show - need to print both auto/manual and
-       current setting. */
-    add_cmd ("architecture", class_support, show_architecture,
-	     "Show the current target architecture", &showlist);
   }
 }
 
@@ -742,13 +729,10 @@ void
 _initialize_gdbarch_utils (void)
 {
   struct cmd_list_element *c;
-  c = add_set_enum_cmd ("endian", class_support,
-			endian_enum, &set_endian_string,
-			"Set endianness of target.",
-			&setlist);
-  set_cmd_sfunc (c, set_endian);
-  /* Don't use set_from_show - need to print both auto/manual and
-     current setting. */
-  add_cmd ("endian", class_support, show_endian,
-	   "Show the current byte-order", &showlist);
+  add_setshow_enum_cmd ("endian", class_support,
+			endian_enum, &set_endian_string, _("\
+Set endianness of target."), _("\
+Show endianness of target."), NULL,
+			set_endian, show_endian,
+			&setlist, &showlist);
 }

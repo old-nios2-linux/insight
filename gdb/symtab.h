@@ -42,7 +42,7 @@ struct agent_expr;
      struct symbol
      struct partial_symbol
 
-   These structures are layed out to encourage good packing.
+   These structures are laid out to encourage good packing.
    They use ENUM_BITFIELD and short int fields, and they order the
    structure members so that fields less than a word are next
    to each other so they can be packed together. */
@@ -257,6 +257,20 @@ extern char *symbol_demangled_name (struct general_symbol_info *symbol);
 
 #define SYMBOL_MATCHES_NATURAL_NAME(symbol, name)			\
   (strcmp_iw (SYMBOL_NATURAL_NAME (symbol), (name)) == 0)
+
+/* Macro that returns the name to be used when sorting and searching symbols. 
+   In  C++, Chill, and Java, we search for the demangled form of a name,
+   and so sort symbols accordingly.  In Ada, however, we search by mangled
+   name.  If there is no distinct demangled name, then SYMBOL_SEARCH_NAME
+   returns the same value (same pointer) as SYMBOL_LINKAGE_NAME. */
+#define SYMBOL_SEARCH_NAME(symbol)					 \
+   (symbol_search_name (&(symbol)->ginfo))
+extern char *symbol_search_name (const struct general_symbol_info *);
+
+/* Analogous to SYMBOL_MATCHES_NATURAL_NAME, but uses the search
+   name.  */
+#define SYMBOL_MATCHES_SEARCH_NAME(symbol, name)			\
+  (strcmp_iw (SYMBOL_SEARCH_NAME (symbol), (name)) == 0)
 
 /* Classification types for a minimal symbol.  These should be taken as
    "advisory only", since if gdb can't easily figure out a
@@ -740,7 +754,7 @@ struct section_offsets
 
 #define	ANOFFSET(secoff, whichone) \
    ((whichone == -1) \
-    ? (internal_error (__FILE__, __LINE__, "Section index is uninitialized"), -1) \
+    ? (internal_error (__FILE__, __LINE__, _("Section index is uninitialized")), -1) \
     : secoff->offsets[whichone])
 
 /* The size of a section_offsets table for N sections.  */
@@ -876,6 +890,10 @@ struct partial_symtab
   /* Full path of the source file.  NULL if not known.  */
 
   char *fullname;
+
+  /* Directory in which it was compiled, or NULL if we don't know.  */
+
+  char *dirname;
 
   /* Information about the object file from which symbols should be read.  */
 
@@ -1066,9 +1084,6 @@ extern int find_pc_partial_function (CORE_ADDR, char **, CORE_ADDR *,
 				     CORE_ADDR *);
 
 extern void clear_pc_function_cache (void);
-
-extern int find_pc_sect_partial_function (CORE_ADDR, asection *,
-					  char **, CORE_ADDR *, CORE_ADDR *);
 
 /* from symtab.c: */
 
@@ -1364,5 +1379,10 @@ extern struct cleanup *make_cleanup_free_search_symbols (struct symbol_search
    const. */
 extern void set_main_name (const char *name);
 extern /*const */ char *main_name (void);
+
+/* Global to indicate presence of HP-compiled objects,
+   in particular, SOM executable file with SOM debug info 
+   Defined in symtab.c, used in hppa-tdep.c. */
+extern int deprecated_hp_som_som_object_present;
 
 #endif /* !defined(SYMTAB_H) */

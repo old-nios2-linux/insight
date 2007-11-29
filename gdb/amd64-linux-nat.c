@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86-64.
 
-   Copyright 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
+   Copyright 2001, 2002, 2003, 2004, 2005 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -48,7 +48,6 @@
 #include "gregset.h"
 
 #include "amd64-tdep.h"
-#include "amd64-linux-tdep.h"
 #include "i386-linux-tdep.h"
 #include "amd64-nat.h"
 
@@ -96,12 +95,6 @@ static int amd64_linux_gregset32_reg_offset[] =
   -1, -1, -1, -1, -1, -1, -1, -1, -1,
   ORIG_RAX * 8			/* "orig_eax" */
 };
-
-/* Which ptrace request retrieves which registers?
-   These apply to the corresponding SET requests as well.  */
-
-#define GETFPREGS_SUPPLIES(regno) \
-  (FP0_REGNUM <= (regno) && (regno) <= MXCSR_REGNUM)
 
 
 /* Transfering the general-purpose registers between GDB, inferiors
@@ -126,38 +119,6 @@ fill_gregset (elf_gregset_t *gregsetp, int regnum)
   amd64_collect_native_gregset (current_regcache, gregsetp, regnum);
 }
 
-/* Fetch all general-purpose registers from process/thread TID and
-   store their values in GDB's register cache.  */
-
-static void
-fetch_regs (int tid)
-{
-  elf_gregset_t regs;
-
-  if (ptrace (PTRACE_GETREGS, tid, 0, (long) &regs) < 0)
-    perror_with_name ("Couldn't get registers");
-
-  supply_gregset (&regs);
-}
-
-/* Store all valid general-purpose registers in GDB's register cache
-   into the process/thread specified by TID.  */
-
-static void
-store_regs (int tid, int regnum)
-{
-  elf_gregset_t regs;
-
-  if (ptrace (PTRACE_GETREGS, tid, 0, (long) &regs) < 0)
-    perror_with_name ("Couldn't get registers");
-
-  fill_gregset (&regs, regnum);
-
-  if (ptrace (PTRACE_SETREGS, tid, 0, (long) &regs) < 0)
-    perror_with_name ("Couldn't write registers");
-}
-
-
 /* Transfering floating-point registers between GDB, inferiors and cores.  */
 
 /* Fill GDB's register cache with the floating-point and SSE register
@@ -176,38 +137,7 @@ supply_fpregset (elf_fpregset_t *fpregsetp)
 void
 fill_fpregset (elf_fpregset_t *fpregsetp, int regnum)
 {
-  amd64_fill_fxsave ((char *) fpregsetp, regnum);
-}
-
-/* Fetch all floating-point registers from process/thread TID and store
-   thier values in GDB's register cache.  */
-
-static void
-fetch_fpregs (int tid)
-{
-  elf_fpregset_t fpregs;
-
-  if (ptrace (PTRACE_GETFPREGS, tid, 0, (long) &fpregs) < 0)
-    perror_with_name ("Couldn't get floating point status");
-
-  supply_fpregset (&fpregs);
-}
-
-/* Store all valid floating-point registers in GDB's register cache
-   into the process/thread specified by TID.  */
-
-static void
-store_fpregs (int tid, int regnum)
-{
-  elf_fpregset_t fpregs;
-
-  if (ptrace (PTRACE_GETFPREGS, tid, 0, (long) &fpregs) < 0)
-    perror_with_name ("Couldn't get floating point status");
-
-  fill_fpregset (&fpregs, regnum);
-
-  if (ptrace (PTRACE_SETFPREGS, tid, 0, (long) &fpregs) < 0)
-    perror_with_name ("Couldn't write floating point status");
+  amd64_collect_fxsave (current_regcache, regnum, fpregsetp);
 }
 
 
@@ -217,8 +147,8 @@ store_fpregs (int tid, int regnum)
    this for all registers (including the floating point and SSE
    registers).  */
 
-void
-fetch_inferior_registers (int regnum)
+static void
+amd64_linux_fetch_inferior_registers (int regnum)
 {
   int tid;
 
@@ -229,27 +159,33 @@ fetch_inferior_registers (int regnum)
 
   if (regnum == -1 || amd64_native_gregset_supplies_p (regnum))
     {
-      fetch_regs (tid);
+      elf_gregset_t regs;
+
+      if (ptrace (PTRACE_GETREGS, tid, 0, (long) &regs) < 0)
+	perror_with_name (_("Couldn't get registers"));
+
+      amd64_supply_native_gregset (current_regcache, &regs, -1);
       if (regnum != -1)
 	return;
     }
 
-  if (regnum == -1 || GETFPREGS_SUPPLIES (regnum))
+  if (regnum == -1 || !amd64_native_gregset_supplies_p (regnum))
     {
-      fetch_fpregs (tid);
-      return;
-    }
+      elf_fpregset_t fpregs;
 
-  internal_error (__FILE__, __LINE__,
-		  "Got request for bad register number %d.", regnum);
+      if (ptrace (PTRACE_GETFPREGS, tid, 0, (long) &fpregs) < 0)
+	perror_with_name (_("Couldn't get floating point status"));
+
+      amd64_supply_fxsave (current_regcache, -1, &fpregs);
+    }
 }
 
 /* Store register REGNUM back into the child process.  If REGNUM is
    -1, do this for all registers (including the floating-point and SSE
    registers).  */
 
-void
-store_inferior_registers (int regnum)
+static void
+amd64_linux_store_inferior_registers (int regnum)
 {
   int tid;
 
@@ -260,19 +196,34 @@ store_inferior_registers (int regnum)
 
   if (regnum == -1 || amd64_native_gregset_supplies_p (regnum))
     {
-      store_regs (tid, regnum);
+      elf_gregset_t regs;
+
+      if (ptrace (PTRACE_GETREGS, tid, 0, (long) &regs) < 0)
+	perror_with_name (_("Couldn't get registers"));
+
+      amd64_collect_native_gregset (current_regcache, &regs, regnum);
+
+      if (ptrace (PTRACE_SETREGS, tid, 0, (long) &regs) < 0)
+	perror_with_name (_("Couldn't write registers"));
+
       if (regnum != -1)
 	return;
     }
 
-  if (regnum == -1 || GETFPREGS_SUPPLIES (regnum))
+  if (regnum == -1 || !amd64_native_gregset_supplies_p (regnum))
     {
-      store_fpregs (tid, regnum);
+      elf_fpregset_t fpregs;
+
+      if (ptrace (PTRACE_GETFPREGS, tid, 0, (long) &fpregs) < 0)
+	perror_with_name (_("Couldn't get floating point status"));
+
+      amd64_collect_fxsave (current_regcache, regnum, &fpregs);
+
+      if (ptrace (PTRACE_SETFPREGS, tid, 0, (long) &fpregs) < 0)
+	perror_with_name (_("Couldn't write floating point status"));
+
       return;
     }
-
-  internal_error (__FILE__, __LINE__,
-		  "Got request to store bad register number %d.", regnum);
 }
 
 
@@ -297,7 +248,7 @@ amd64_linux_dr_get (int regnum)
 		  offsetof (struct user, u_debugreg[regnum]), 0);
   if (errno != 0)
 #if 0
-    perror_with_name ("Couldn't read debug register");
+    perror_with_name (_("Couldn't read debug register"));
 #else
     return 0;
 #endif
@@ -318,7 +269,7 @@ amd64_linux_dr_set (int regnum, unsigned long value)
   errno = 0;
   ptrace (PT_WRITE_U, tid, offsetof (struct user, u_debugreg[regnum]), value);
   if (errno != 0)
-    perror_with_name ("Couldn't write debug register");
+    perror_with_name (_("Couldn't write debug register"));
 }
 
 void
@@ -409,11 +360,13 @@ ps_get_thread_area (const struct ps_prochandle *ph,
 }
 
 
-void
-child_post_startup_inferior (ptid_t ptid)
+static void (*super_post_startup_inferior) (ptid_t ptid);
+
+static void
+amd64_linux_child_post_startup_inferior (ptid_t ptid)
 {
   i386_cleanup_dregs ();
-  linux_child_post_startup_inferior (ptid);
+  super_post_startup_inferior (ptid);
 }
 
 
@@ -423,6 +376,8 @@ void _initialize_amd64_linux_nat (void);
 void
 _initialize_amd64_linux_nat (void)
 {
+  struct target_ops *t;
+
   amd64_native_gregset32_reg_offset = amd64_linux_gregset32_reg_offset;
   amd64_native_gregset32_num_regs = I386_LINUX_NUM_REGS;
   amd64_native_gregset64_reg_offset = amd64_linux_gregset64_reg_offset;
@@ -431,4 +386,18 @@ _initialize_amd64_linux_nat (void)
 	      == amd64_native_gregset32_num_regs);
   gdb_assert (ARRAY_SIZE (amd64_linux_gregset64_reg_offset)
 	      == amd64_native_gregset64_num_regs);
+
+  /* Fill in the generic GNU/Linux methods.  */
+  t = linux_target ();
+
+  /* Override the GNU/Linux inferior startup hook.  */
+  super_post_startup_inferior = t->to_post_startup_inferior;
+  t->to_post_startup_inferior = amd64_linux_child_post_startup_inferior;
+
+  /* Add our register access methods.  */
+  t->to_fetch_registers = amd64_linux_fetch_inferior_registers;
+  t->to_store_registers = amd64_linux_store_inferior_registers;
+
+  /* Register the target.  */
+  add_target (t);
 }
