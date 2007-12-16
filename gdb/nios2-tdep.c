@@ -62,24 +62,19 @@
 #define EA_REGNUM 29  /* Exception address */
 #define BA_REGNUM 30  /* Breakpoint return address */
 #define RA_REGNUM 31  /* Return address */
-#undef PC_REGNUM
-#define PC_REGNUM 32
-#define STATUS_REGNUM 33  /* Ctrl registers */
-#define ESTATUS_REGNUM 34
-#define BSTATUS_REGNUM 35
-#define IENABLE_REGNUM 36
-#define IPENDING_REGNUM 37
-#define CPUID_REGNUM 38
-#define PTEADDR_REGNUM 41
-#define TLBACC_REGNUM 42
-#define TLBMISC_REGNUM 43
+#define STATUS_REGNUM 32  /* Ctrl registers */
+#define ESTATUS_REGNUM 33
+#define BSTATUS_REGNUM 34
+#define IENABLE_REGNUM 35
+#define IPENDING_REGNUM 36
+#define CPUID_REGNUM 37
 #define FIRST_ARGREG R4_REGNUM
 #define LAST_ARGREG R7_REGNUM
 /* Number of all registers */
-#define NIOS2_NUM_REGS (44)
+#define NIOS2_NUM_REGS (38)
 /* The maximum register number displayed to the user, */
 /* as a result of typing "info reg" at the gdb prompt */
-#define NIOS2_MAX_REG_DISPLAYED_REGNUM (38)
+#define NIOS2_MAX_REG_DISPLAYED_REGNUM (34)
 
 #define NIOS2_OPCODE_SIZE 4
 
@@ -170,18 +165,12 @@ static struct register_info nios2_register_info_table[] = {
   /* 29 */ {4, "ea", &builtin_type_uint32},
   /* 30 */ {4, "ba", &builtin_type_uint32},
   /* 31 */ {4, "ra", &builtin_type_uint32},
-  /* 32 */ {4, "pc", &builtin_type_uint32},
-  /* 33 */ {4, "status", &builtin_type_uint32},
-  /* 34 */ {4, "estatus", &builtin_type_uint32},
-  /* 35 */ {4, "bstatus", &builtin_type_uint32},
-  /* 36 */ {4, "ienable", &builtin_type_uint32},
-  /* 37 */ {4, "ipending", &builtin_type_uint32},
-  /* 38 */ {4, "cpuid", &builtin_type_uint32}, 
-  /* 39 */ {4, "ctl6", &builtin_type_uint32}, 
-  /* 40 */ {4, "ctl7", &builtin_type_uint32}, 
-  /* 41 */ {4, "pteaddr", &builtin_type_uint32},
-  /* 42 */ {4, "tlbacc", &builtin_type_uint32},  
-  /* 43 */ {4, "tlbmisc", &builtin_type_uint32}
+  /* 32 */ {4, "status", &builtin_type_uint32},
+  /* 33 */ {4, "estatus", &builtin_type_uint32},
+  /* 34 */ {4, "bstatus", &builtin_type_uint32},
+  /* 35 */ {4, "ienable", &builtin_type_uint32},
+  /* 36 */ {4, "ipending", &builtin_type_uint32},
+  /* 37 */ {4, "cpuid", &builtin_type_uint32}
 };
 
 /* This array is a mapping from Dwarf-2 register 
@@ -200,13 +189,12 @@ static int nios2_dwarf2gdb_regno_map[] = {
   EA_REGNUM,        /* 29 */	
   BA_REGNUM,        /* 30 */ 
   RA_REGNUM,        /* 31 */
-  PC_REGNUM,        /* 32 */
-  STATUS_REGNUM,    /* 33 */
-  ESTATUS_REGNUM,   /* 34 */
-  BSTATUS_REGNUM,   /* 35 */
-  IENABLE_REGNUM,   /* 36 */
-  IPENDING_REGNUM,  /* 37 */
-  38, 39, 40, 41, 42, 43
+  STATUS_REGNUM,    /* 32 */
+  ESTATUS_REGNUM,   /* 33 */
+  BSTATUS_REGNUM,   /* 34 */
+  IENABLE_REGNUM,   /* 35 */
+  IPENDING_REGNUM,  /* 36 */
+  CPUID_REGNUM      /* 37 */
 };
 
 /* Dwarf-2 <-> GDB register numbers mapping.  */
@@ -1153,7 +1141,11 @@ nios2_breakpoint_from_pc (CORE_ADDR *bp_addr, int *bp_size)
   /*                 00000   00000   11110   110100 00000 111010 */
   /* In bytes:       00000000 00111101 10100000 00111010 */
   /*                 0x0       0x3d    0xa0     0x3a */
+#if 0
   static unsigned char breakpoint[] = {0x3a, 0xa0, 0x3d, 0x0};
+#else
+  static unsigned char breakpoint[] = {0x7a, 0x68, 0x3b, 0x0};	/* Trap instr. w/imm=0x01 */
+#endif
    *bp_size = 4;
    return breakpoint;
 }
@@ -1255,7 +1247,7 @@ nios2_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
 {
   char buf[8];
 
-  frame_unwind_register (next_frame, PC_REGNUM, buf);
+  frame_unwind_register (next_frame, EA_REGNUM, buf);
   return extract_typed_address (buf, builtin_type_void_func_ptr);
 }
 
@@ -1323,7 +1315,7 @@ nios2_frame_prev_register (struct frame_info *next_frame, void **this_cache,
   /* The PC of the previous frame is stored in the RA register of
      the current frame.  Frob regnum so that we pull the value from
      the correct place.  */
-  if (regnum == PC_REGNUM)
+  if (regnum == EA_REGNUM)
     regnum = cache->return_regnum;
 
   /* If we've worked out where a register is stored then load it from there.
@@ -1439,7 +1431,7 @@ nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* The register set.  */
   set_gdbarch_num_regs (gdbarch, NIOS2_NUM_REGS);
   set_gdbarch_sp_regnum (gdbarch, SP_REGNUM);
-  set_gdbarch_pc_regnum (gdbarch, PC_REGNUM);	/* Pseudo register PC */
+  set_gdbarch_pc_regnum (gdbarch, EA_REGNUM);	/* Exception return address */
 
   set_gdbarch_register_name (gdbarch, nios2_register_name);
   /* Length of ordinary registers used in push_word and a few other
