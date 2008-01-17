@@ -1145,6 +1145,84 @@ nios2_skip_prologue (CORE_ADDR start_pc)
   return start_pc;
 }
 
+/* nios2_software_single_step() is called just before we want to resume
+   the inferior, if we want to single-step it but there is no hardware
+   or kernel single-step support (NIOS2 on GNU/Linux for example).  We find
+   the target of the coming instruction and breakpoint it.
+
+   single_step is also called just after the inferior stops.  If we had
+   set up a simulated single-step, we undo our damage.  */
+
+void
+nios2_software_single_step (enum target_signal sig, int insert_breakpoints_p)
+{
+  int ii;
+  unsigned int insn;
+  CORE_ADDR pc;
+  CORE_ADDR breaks[2];
+  int imme;
+
+  if (insert_breakpoints_p)
+    {
+      pc = read_pc ();
+      breaks[0] = pc + 4;
+      breaks[1] = -1;
+      insn = read_memory_unsigned_integer (pc, 4);
+
+      /* Calculate the destination of a branch/jump */
+      switch (GET_IW_OP(insn))
+	{
+	  /* I-type branch */
+	case OP_BEQ:
+	case OP_BGE:
+	case OP_BGEU:
+	case OP_BLT:
+	case OP_BLTU:
+	case OP_BNE:
+	  imme = (short) GET_IW_IMM16(insn);
+	  breaks[1] = pc + 4 + imme;
+	  break;
+	case OP_BR:
+	  imme = (short) GET_IW_IMM16(insn);
+	  breaks[0] = pc + 4 + imme;
+	  break;
+	  /* J-type branch */
+	case OP_CALL:
+	case OP_JMPI:
+	  imme = GET_IW_IMM26(insn);
+	  breaks[0] = (pc & 0xf0000000) | (imme * 4);
+	  break;
+	  /* R-type branch */
+	case OP_OPX:
+	  switch (GET_IW_OPX(insn))
+	    {
+	    case OPX_CALLR:
+	    case OPX_JMP:
+	    case OPX_RET:
+	      imme = read_register (GET_IW_A(insn));
+	      breaks[0] = imme;
+	      break;
+	    }
+	  break;
+	}
+
+      /* Don't put two breakpoints on the same address. */
+      if (breaks[1] == breaks[0])
+	breaks[1] = -1;
+
+      for (ii = 0; ii < 2; ++ii)
+	{
+	  /* ignore invalid breakpoint. */
+	  if (breaks[ii] == -1)
+	    continue;
+	  insert_single_step_breakpoint (breaks[ii]);
+	}
+    }
+  else
+    remove_single_step_breakpoints ();
+
+}
+
 const unsigned char*
 nios2_breakpoint_from_pc (CORE_ADDR *bp_addr, int *bp_size)
 {
@@ -1153,7 +1231,11 @@ nios2_breakpoint_from_pc (CORE_ADDR *bp_addr, int *bp_size)
   /*                 00000   00000   11110   110100 00000 111010 */
   /* In bytes:       00000000 00111101 10100000 00111010 */
   /*                 0x0       0x3d    0xa0     0x3a */
+#if 0
   static unsigned char breakpoint[] = {0x3a, 0xa0, 0x3d, 0x0};
+#else
+  static unsigned char breakpoint[] = {0x7a, 0x68, 0x3b, 0x0}; /* Trap instr. w/imm=0x01 */
+#endif
    *bp_size = 4;
    return breakpoint;
 }
@@ -1481,6 +1563,7 @@ nios2_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_skip_prologue (gdbarch, nios2_skip_prologue);
   set_gdbarch_breakpoint_from_pc (gdbarch, nios2_breakpoint_from_pc);
+  set_gdbarch_software_single_step (gdbarch, nios2_software_single_step);
 
   set_gdbarch_unwind_dummy_id (gdbarch, nios2_unwind_dummy_id); 
   set_gdbarch_unwind_pc (gdbarch, nios2_unwind_pc);
