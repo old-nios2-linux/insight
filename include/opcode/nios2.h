@@ -218,6 +218,7 @@ struct nios2_reg
 #define OP_MATCH_FLUSHD         OP_FLUSHD
 #define OP_MATCH_FLUSHDA        OP_FLUSHDA
 #define OP_MATCH_INITD          OP_INITD
+#define OP_MATCH_INITDA         OP_INITDA
 #define OP_MATCH_CALL           OP_CALL
 #define OP_MATCH_CMPEQI         OP_CMPEQI
 #define OP_MATCH_CMPGEI         OP_CMPGEI
@@ -234,6 +235,7 @@ struct nios2_reg
 #define OP_MATCH_LDHIO          OP_LDHIO
 #define OP_MATCH_LDHU           OP_LDHU
 #define OP_MATCH_LDHUIO         OP_LDHUIO
+#define OP_MATCH_LDL            OP_LDL
 #define OP_MATCH_LDW            OP_LDW
 #define OP_MATCH_LDWIO          OP_LDWIO
 #define OP_MATCH_MULI           OP_MULI
@@ -242,6 +244,7 @@ struct nios2_reg
 #define OP_MATCH_ORI            OP_ORI
 #define OP_MATCH_STB            OP_STB
 #define OP_MATCH_STBIO          OP_STBIO
+#define OP_MATCH_STC            OP_STC
 #define OP_MATCH_STH            OP_STH
 #define OP_MATCH_STHIO          OP_STHIO
 #define OP_MATCH_STW            OP_STW

@@ -70,16 +70,22 @@
 #define IENABLE_REGNUM 36
 #define IPENDING_REGNUM 37
 #define CPUID_REGNUM 38
+#define EXCEPTION_REGNUM 40
 #define PTEADDR_REGNUM 41
 #define TLBACC_REGNUM 42
 #define TLBMISC_REGNUM 43
+#define FSTATUS_REGNUM 44
+#define BADADDR_REGNUM 45
+#define CONFIG_REGNUM 46
+#define MPUBASE_REGNUM 47
+#define MPUACC_REGNUM 48
 #define FIRST_ARGREG R4_REGNUM
 #define LAST_ARGREG R7_REGNUM
 /* Number of all registers */
-#define NIOS2_NUM_REGS (44)
+#define NIOS2_NUM_REGS (49)
 /* The maximum register number displayed to the user, */
 /* as a result of typing "info reg" at the gdb prompt */
-#define NIOS2_MAX_REG_DISPLAYED_REGNUM (38)
+#define NIOS2_MAX_REG_DISPLAYED_REGNUM (48)
 
 #define NIOS2_OPCODE_SIZE 4
 
@@ -178,10 +184,15 @@ static struct register_info nios2_register_info_table[] = {
   /* 37 */ {4, "ipending", &builtin_type_uint32},
   /* 38 */ {4, "cpuid", &builtin_type_uint32}, 
   /* 39 */ {4, "ctl6", &builtin_type_uint32}, 
-  /* 40 */ {4, "ctl7", &builtin_type_uint32}, 
+  /* 40 */ {4, "exception", &builtin_type_uint32}, 
   /* 41 */ {4, "pteaddr", &builtin_type_uint32},
   /* 42 */ {4, "tlbacc", &builtin_type_uint32},  
-  /* 43 */ {4, "tlbmisc", &builtin_type_uint32}
+  /* 43 */ {4, "tlbmisc", &builtin_type_uint32},
+  /* 44 */ {4, "ctl11", &builtin_type_uint32},
+  /* 45 */ {4, "badaddr", &builtin_type_uint32},
+  /* 46 */ {4, "config", &builtin_type_uint32},
+  /* 47 */ {4, "mpubase", &builtin_type_uint32},
+  /* 48 */ {4, "mpuacc", &builtin_type_uint32}
 };
 
 /* This array is a mapping from Dwarf-2 register 
@@ -206,7 +217,17 @@ static int nios2_dwarf2gdb_regno_map[] = {
   BSTATUS_REGNUM,   /* 35 */
   IENABLE_REGNUM,   /* 36 */
   IPENDING_REGNUM,  /* 37 */
-  38, 39, 40, 41, 42, 43
+  CPUID_REGNUM,     /* 38 */
+  39, /* CTL6 */    /* 39 */
+  EXCEPTION_REGNUM, /* 40 */
+  PTEADDR_REGNUM,   /* 41 */
+  TLBACC_REGNUM,    /* 42 */
+  TLBMISC_REGNUM,   /* 43 */
+  FSTATUS_REGNUM,   /* 44 */
+  BADADDR_REGNUM,   /* 45 */
+  CONFIG_REGNUM,    /* 46 */
+  MPUBASE_REGNUM,   /* 47 */
+  MPUACC_REGNUM     /* 48 */
 };
 
 /* Dwarf-2 <-> GDB register numbers mapping.  */

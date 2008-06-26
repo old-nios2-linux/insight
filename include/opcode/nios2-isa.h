@@ -24,32 +24,79 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #endif /* ALT_ASM_SRC */
 
 /* Constants for instruction fields and ISA */
+#define BREAK_INST_EXC_ID 7
+#define CPU_RESET_CAUSE_ID 1
 #define CPU_RESET_EXC_ID 1
-#define DIV_ERROR_EXC_ID 9
-#define DTLB_MISS_EXC_ID 15
-#define DTLB_PERM_EXC_ID 16
-#define FAST_INTR_EXC_ID 3
-#define HBREAK_EXC_ID 0
-#define ITLB_MISS_EXC_ID 13
-#define ITLB_PERM_EXC_ID 14
-#define MISALIGNED_DATA_ADDR_EXC_ID 7
-#define MISALIGNED_TARGET_PC_EXC_ID 8
-#define NMI_EXC_ID 2
-#define NORM_INTR_EXC_ID 4
-#define SBREAK_EXC_ID 6
-#define SLAVE_DATA_ACCESS_ERROR_EXC_ID 18
-#define SLAVE_INST_ACCESS_ERROR_EXC_ID 17
-#define SUPERVISOR_DATA_ADDR_EXC_ID 12
-#define SUPERVISOR_INST_ADDR_EXC_ID 10
-#define SUPERVISOR_INST_EXC_ID 11
-#define TRAP_EXC_ID 5
+#define DIV_ERROR_CAUSE_ID 8
+#define DIV_ERROR_EXC_ID 10
+#define EMPTY_SLAVE_DATA_ACCESS_ERROR_CAUSE_ID 30
+#define EMPTY_SLAVE_DATA_ACCESS_ERROR_EXC_ID 22
+#define EMPTY_SLAVE_INST_ACCESS_ERROR_CAUSE_ID 29
+#define EMPTY_SLAVE_INST_ACCESS_ERROR_EXC_ID 21
+#define HBREAK_EXC_ID 2
+#define ILLEGAL_INST_CAUSE_ID 5
+#define ILLEGAL_INST_EXC_ID 6
+#define MAX_CAUSE_ID 31
+#define MISALIGNED_DATA_ADDR_CAUSE_ID 6
+#define MISALIGNED_DATA_ADDR_EXC_ID 8
+#define MISALIGNED_TARGET_PC_CAUSE_ID 7
+#define MISALIGNED_TARGET_PC_EXC_ID 9
+#define MPU_DATA_REGION_VIOLATION_CAUSE_ID 17
+#define MPU_DATA_REGION_VIOLATION_EXC_ID 20
+#define MPU_INST_REGION_VIOLATION_CAUSE_ID 16
+#define MPU_INST_REGION_VIOLATION_EXC_ID 19
+#define NIOS2_DISPLAY_INST_TRACE 1
+#define NIOS2_DISPLAY_MEM_TRAFFIC 2
+#define NONE_EXC_ID 0
+#define NORM_INTR_CAUSE_ID 2
+#define NORM_INTR_EXC_ID 3
+#define NUM_EXC_IDS 24
+#define READONLY_SLAVE_DATA_ACCESS_ERROR_CAUSE_ID 31
+#define READONLY_SLAVE_DATA_ACCESS_ERROR_EXC_ID 23
+#define RECORD_DATA_ADDR 2
+#define RECORD_NOTHING 0
+#define RECORD_TARGET_PCB 1
+#define RESET_CAUSE_ID 0
+#define SUPERVISOR_DATA_ADDR_CAUSE_ID 11
+#define SUPERVISOR_DATA_ADDR_EXC_ID 13
+#define SUPERVISOR_INST_ADDR_CAUSE_ID 9
+#define SUPERVISOR_INST_ADDR_EXC_ID 11
+#define SUPERVISOR_INST_CAUSE_ID 10
+#define SUPERVISOR_INST_EXC_ID 12
+#define TLB_DATA_MISS_EXC_ID 15
+#define TLB_INST_MISS_EXC_ID 14
+#define TLB_MISS_CAUSE_ID 12
+#define TLB_R_PERM_CAUSE_ID 14
+#define TLB_R_PERM_EXC_ID 17
+#define TLB_W_PERM_CAUSE_ID 15
+#define TLB_W_PERM_EXC_ID 18
+#define TLB_X_PERM_CAUSE_ID 13
+#define TLB_X_PERM_EXC_ID 16
+#define TRAP_INST_CAUSE_ID 3
+#define TRAP_INST_EXC_ID 4
+#define UNIMP_INST_CAUSE_ID 4
+#define UNIMP_INST_EXC_ID 5
 #define AT_REGNUM 1
+#define BADADDR_REG_BADDR_LSB 0
+#define BADADDR_REG_BADDR_MSB 31
+#define BADADDR_REG_BADDR_SZ 32
+#define BADADDR_REG_BADDR_MASK 0xffffffff
+#define BADADDR_REG_LSB 0
+#define BADADDR_REG_MSB 31
+#define BADADDR_REG_REGNUM 12
+#define BADADDR_REG_SZ 32
+#define BADADDR_REG_MASK 0xffffffff
 #define BRETADDR_REGNUM 30
-#define BSTATUS_REG_LSB 2
+#define BSTATUS_REG_LSB 0
 #define BSTATUS_REG_MMU_LSB 0
 #define BSTATUS_REG_MMU_MSB 2
 #define BSTATUS_REG_MMU_SZ 3
 #define BSTATUS_REG_MMU_MASK 0x7
+#define BSTATUS_REG_MPU_LSB 0
+#define BSTATUS_REG_MPU_MSB 1
+#define BSTATUS_REG_MPU_SZ 2
+#define BSTATUS_REG_MPU_MASK 0x3
+#define BSTATUS_REG_MSB 2
 #define BSTATUS_REG_NO_MMU_LSB 0
 #define BSTATUS_REG_NO_MMU_MSB 0
 #define BSTATUS_REG_NO_MMU_SZ 1
@@ -69,6 +116,15 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define COMPARE_OP_NE 0x3
 #define COMPARE_OP_SZ 2
 #define COMPARE_OP_MASK 0x3
+#define CONFIG_REG_LSB 0
+#define CONFIG_REG_MSB 0
+#define CONFIG_REG_PE_LSB 0
+#define CONFIG_REG_PE_MSB 0
+#define CONFIG_REG_PE_SZ 1
+#define CONFIG_REG_PE_MASK 0x1
+#define CONFIG_REG_REGNUM 13
+#define CONFIG_REG_SZ 1
+#define CONFIG_REG_MASK 0x1
 #define CPUID_REG_LSB 0
 #define CPUID_REG_MSB 31
 #define CPUID_REG_REGNUM 5
@@ -91,6 +147,10 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define ESTATUS_REG_MMU_MSB 2
 #define ESTATUS_REG_MMU_SZ 3
 #define ESTATUS_REG_MMU_MASK 0x7
+#define ESTATUS_REG_MPU_LSB 0
+#define ESTATUS_REG_MPU_MSB 1
+#define ESTATUS_REG_MPU_SZ 2
+#define ESTATUS_REG_MPU_MASK 0x3
 #define ESTATUS_REG_MSB 2
 #define ESTATUS_REG_NO_MMU_LSB 0
 #define ESTATUS_REG_NO_MMU_MSB 0
@@ -100,6 +160,10 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define ESTATUS_REG_SZ 3
 #define ESTATUS_REG_MASK 0x7
 #define ET_REGNUM 24
+#define EXCEPTION_REG_CAUSE_LSB 2
+#define EXCEPTION_REG_CAUSE_MSB 6
+#define EXCEPTION_REG_CAUSE_SZ 5
+#define EXCEPTION_REG_CAUSE_MASK 0x1f
 #define EXCEPTION_REG_LSB 0
 #define EXCEPTION_REG_MEA_LSB 0
 #define EXCEPTION_REG_MEA_MSB 0
@@ -109,10 +173,10 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define EXCEPTION_REG_MEE_MSB 1
 #define EXCEPTION_REG_MEE_SZ 1
 #define EXCEPTION_REG_MEE_MASK 0x1
-#define EXCEPTION_REG_MSB 1
+#define EXCEPTION_REG_MSB 6
 #define EXCEPTION_REG_REGNUM 7
-#define EXCEPTION_REG_SZ 2
-#define EXCEPTION_REG_MASK 0x3
+#define EXCEPTION_REG_SZ 7
+#define EXCEPTION_REG_MASK 0x7f
 #define FP_REGNUM 28
 #define FSTATUS_REG_REGNUM 11
 #define GP_REGNUM 26
@@ -173,7 +237,6 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define IW_MEMSZ_MSB 4
 #define IW_MEMSZ_SZ 2
 #define IW_MEMSZ_MASK 0x3
-#define IW_MEMSZ_WORD 0x2
 #define IW_MEMSZ_WORD_MSB 0x1
 #define IW_OP_LSB 0
 #define IW_OP_MSB 5
@@ -251,6 +314,77 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define MMU_ADDR_VPN_MSB 31
 #define MMU_ADDR_VPN_SZ 20
 #define MMU_ADDR_VPN_MASK 0xfffff
+#define MPU_DATA_PERM_SUPER_NONE_USER_NONE 0
+#define MPU_DATA_PERM_SUPER_RD_USER_NONE 1
+#define MPU_DATA_PERM_SUPER_RD_USER_RD 2
+#define MPU_DATA_PERM_SUPER_RW_USER_NONE 4
+#define MPU_DATA_PERM_SUPER_RW_USER_RD 5
+#define MPU_DATA_PERM_SUPER_RW_USER_RW 6
+#define MPU_DATA_PERM_SZ 3
+#define MPU_DATA_PERM_MASK 0x7
+#define MPU_INST_PERM_SUPER_EXEC_USER_EXEC 2
+#define MPU_INST_PERM_SUPER_EXEC_USER_NONE 1
+#define MPU_INST_PERM_SUPER_NONE_USER_NONE 0
+#define MPU_INST_PERM_SZ 2
+#define MPU_INST_PERM_MASK 0x3
+#define MPU_MAX_REGION_SIZE_LOG2 20
+#define MPU_MAX_REGIONS 32
+#define MPU_MIN_REGION_SIZE_LOG2 6
+#define MPU_MIN_REGIONS 1
+#define MPUACC_REG_C_LSB 5
+#define MPUACC_REG_C_MSB 5
+#define MPUACC_REG_C_SZ 1
+#define MPUACC_REG_C_MASK 0x1
+#define MPUACC_REG_LIMIT_LSB 6
+#define MPUACC_REG_LIMIT_MSB 31
+#define MPUACC_REG_LIMIT_SZ 26
+#define MPUACC_REG_LIMIT_MASK 0x3ffffff
+#define MPUACC_REG_LSB 0
+#define MPUACC_REG_MASK_LSB 6
+#define MPUACC_REG_MASK_MSB 30
+#define MPUACC_REG_MASK_SZ 25
+#define MPUACC_REG_MASK_MASK 0x1ffffff
+#define MPUACC_REG_MSB 31
+#define MPUACC_REG_PERM_LSB 2
+#define MPUACC_REG_PERM_MSB 4
+#define MPUACC_REG_PERM_SZ 3
+#define MPUACC_REG_PERM_MASK 0x7
+#define MPUACC_REG_RD_LSB 1
+#define MPUACC_REG_RD_MSB 1
+#define MPUACC_REG_RD_SZ 1
+#define MPUACC_REG_RD_MASK 0x1
+#define MPUACC_REG_REGNUM 15
+#define MPUACC_REG_RSV1_LSB 31
+#define MPUACC_REG_RSV1_MSB 31
+#define MPUACC_REG_RSV1_SZ 1
+#define MPUACC_REG_RSV1_MASK 0x1
+#define MPUACC_REG_SZ 32
+#define MPUACC_REG_MASK 0xffffffff
+#define MPUACC_REG_WR_LSB 0
+#define MPUACC_REG_WR_MSB 0
+#define MPUACC_REG_WR_SZ 1
+#define MPUACC_REG_WR_MASK 0x1
+#define MPUBASE_REG_BASE_LSB 6
+#define MPUBASE_REG_BASE_MSB 30
+#define MPUBASE_REG_BASE_SZ 25
+#define MPUBASE_REG_BASE_MASK 0x1ffffff
+#define MPUBASE_REG_D_LSB 0
+#define MPUBASE_REG_D_MSB 0
+#define MPUBASE_REG_D_SZ 1
+#define MPUBASE_REG_D_MASK 0x1
+#define MPUBASE_REG_INDEX_LSB 1
+#define MPUBASE_REG_INDEX_MSB 5
+#define MPUBASE_REG_INDEX_SZ 5
+#define MPUBASE_REG_INDEX_MASK 0x1f
+#define MPUBASE_REG_LSB 0
+#define MPUBASE_REG_MSB 31
+#define MPUBASE_REG_REGNUM 14
+#define MPUBASE_REG_RSV1_LSB 31
+#define MPUBASE_REG_RSV1_MSB 31
+#define MPUBASE_REG_RSV1_SZ 1
+#define MPUBASE_REG_RSV1_MASK 0x1
+#define MPUBASE_REG_SZ 32
+#define MPUBASE_REG_MASK 0xffffffff
 #define PTEADDR_REG_LSB 0
 #define PTEADDR_REG_MSB 31
 #define PTEADDR_REG_PTBASE_LSB 22
@@ -275,7 +409,7 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define RF_ADDR_MASK 0x1f
 #define RF_NUM_REG 32
 #define SIM_REG_LSB 0
-#define SIM_REG_MSB 3
+#define SIM_REG_MSB 2
 #define SIM_REG_PERF_CNT_CLR_LSB 2
 #define SIM_REG_PERF_CNT_CLR_MSB 2
 #define SIM_REG_PERF_CNT_CLR_SZ 1
@@ -285,24 +419,20 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define SIM_REG_PERF_CNT_EN_SZ 1
 #define SIM_REG_PERF_CNT_EN_MASK 0x1
 #define SIM_REG_REGNUM 6
-#define SIM_REG_SHOW_DTLB_LSB 4
-#define SIM_REG_SHOW_DTLB_MSB 4
-#define SIM_REG_SHOW_DTLB_SZ 1
-#define SIM_REG_SHOW_DTLB_MASK 0x1
-#define SIM_REG_SHOW_ITLB_LSB 3
-#define SIM_REG_SHOW_ITLB_MSB 3
-#define SIM_REG_SHOW_ITLB_SZ 1
-#define SIM_REG_SHOW_ITLB_MASK 0x1
-#define SIM_REG_SHOW_MMU_REGS_LSB 5
-#define SIM_REG_SHOW_MMU_REGS_MSB 5
+#define SIM_REG_SHOW_MMU_REGS_LSB 4
+#define SIM_REG_SHOW_MMU_REGS_MSB 4
 #define SIM_REG_SHOW_MMU_REGS_SZ 1
 #define SIM_REG_SHOW_MMU_REGS_MASK 0x1
+#define SIM_REG_SHOW_TLB_LSB 3
+#define SIM_REG_SHOW_TLB_MSB 3
+#define SIM_REG_SHOW_TLB_SZ 1
+#define SIM_REG_SHOW_TLB_MASK 0x1
 #define SIM_REG_STOP_LSB 0
 #define SIM_REG_STOP_MSB 0
 #define SIM_REG_STOP_SZ 1
 #define SIM_REG_STOP_MASK 0x1
-#define SIM_REG_SZ 4
-#define SIM_REG_MASK 0xf
+#define SIM_REG_SZ 3
+#define SIM_REG_MASK 0x7
 #define SP_REGNUM 27
 #define STATUS_REG_EH_LSB 2
 #define STATUS_REG_EH_MSB 2
@@ -317,6 +447,14 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define STATUS_REG_MMU_RSV_MASK 0x1fffffff
 #define STATUS_REG_MMU_SZ 3
 #define STATUS_REG_MMU_MASK 0x7
+#define STATUS_REG_MPU_LSB 0
+#define STATUS_REG_MPU_MSB 1
+#define STATUS_REG_MPU_RSV_LSB 2
+#define STATUS_REG_MPU_RSV_MSB 31
+#define STATUS_REG_MPU_RSV_SZ 30
+#define STATUS_REG_MPU_RSV_MASK 0x3fffffff
+#define STATUS_REG_MPU_SZ 2
+#define STATUS_REG_MPU_MASK 0x3
 #define STATUS_REG_MSB 2
 #define STATUS_REG_NO_MMU_LSB 0
 #define STATUS_REG_NO_MMU_MSB 0
@@ -338,17 +476,17 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define STATUS_REG_U_SZ 1
 #define STATUS_REG_U_MASK 0x1
 #define TLB_MAX_ENTRIES 1024
-#define TLB_MAX_LINES 512
+#define TLB_MAX_LINES 128
 #define TLB_MAX_PID_SZ 14
 #define TLB_MAX_PID_MASK 0x3fff
 #define TLB_MAX_PTR_SZ 10
 #define TLB_MAX_PTR_MASK 0x3ff
-#define TLB_MAX_WAYS 8
-#define TLB_MIN_PID_SZ 1
-#define TLB_MIN_PID_MASK 0x1
+#define TLB_MAX_WAYS 16
+#define TLB_MIN_PID_SZ 8
+#define TLB_MIN_PID_MASK 0xff
 #define TLB_MIN_PTR_SZ 7
 #define TLB_MIN_PTR_MASK 0x7f
-#define TLB_MIN_WAYS 2
+#define TLB_MIN_WAYS 8
 #define TLBACC_REG_C_LSB 24
 #define TLBACC_REG_C_MSB 24
 #define TLBACC_REG_C_SZ 1
@@ -404,27 +542,23 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define TLBMISC_REG_PID_MSB 17
 #define TLBMISC_REG_PID_SZ 14
 #define TLBMISC_REG_PID_MASK 0x3fff
-#define TLBMISC_REG_RD_LSB 24
-#define TLBMISC_REG_RD_MSB 24
+#define TLBMISC_REG_RD_LSB 19
+#define TLBMISC_REG_RD_MSB 19
 #define TLBMISC_REG_RD_SZ 1
 #define TLBMISC_REG_RD_MASK 0x1
 #define TLBMISC_REG_REGNUM 10
-#define TLBMISC_REG_RSV0_LSB 18
-#define TLBMISC_REG_RSV0_MSB 19
-#define TLBMISC_REG_RSV0_SZ 2
-#define TLBMISC_REG_RSV0_MASK 0x3
-#define TLBMISC_REG_RSV1_LSB 25
+#define TLBMISC_REG_RSV1_LSB 24
 #define TLBMISC_REG_RSV1_MSB 31
-#define TLBMISC_REG_RSV1_SZ 7
-#define TLBMISC_REG_RSV1_MASK 0x7f
+#define TLBMISC_REG_RSV1_SZ 8
+#define TLBMISC_REG_RSV1_MASK 0xff
 #define TLBMISC_REG_SZ 24
 #define TLBMISC_REG_MASK 0xffffff
 #define TLBMISC_REG_WAY_LSB 20
-#define TLBMISC_REG_WAY_MSB 22
-#define TLBMISC_REG_WAY_SZ 3
-#define TLBMISC_REG_WAY_MASK 0x7
-#define TLBMISC_REG_WE_LSB 23
-#define TLBMISC_REG_WE_MSB 23
+#define TLBMISC_REG_WAY_MSB 23
+#define TLBMISC_REG_WAY_SZ 4
+#define TLBMISC_REG_WAY_MASK 0xf
+#define TLBMISC_REG_WE_LSB 18
+#define TLBMISC_REG_WE_MSB 18
 #define TLBMISC_REG_WE_SZ 1
 #define TLBMISC_REG_WE_MASK 0x1
 
@@ -506,26 +640,51 @@ extern const char* opx_names[NUM_OPX_INSTS];
          (((Val) & IW_TRAP_BREAK_IMM5_MASK) << IW_TRAP_BREAK_IMM5_LSB))
 
 /* Macros to extract control register fields */
+#define GET_BADADDR_REG_BADDR(Reg) \
+    (((Reg) >> BADADDR_REG_BADDR_LSB) & BADADDR_REG_BADDR_MASK)
+#define SET_BADADDR_REG_BADDR(Reg, Val) \
+    Reg = (((Reg) & (~(BADADDR_REG_BADDR_MASK << BADADDR_REG_BADDR_LSB))) | \
+         (((Val) & BADADDR_REG_BADDR_MASK) << BADADDR_REG_BADDR_LSB))
 #define GET_BSTATUS_REG_MMU(Reg) \
     (((Reg) >> BSTATUS_REG_MMU_LSB) & BSTATUS_REG_MMU_MASK)
 #define SET_BSTATUS_REG_MMU(Reg, Val) \
     Reg = (((Reg) & (~(BSTATUS_REG_MMU_MASK << BSTATUS_REG_MMU_LSB))) | \
          (((Val) & BSTATUS_REG_MMU_MASK) << BSTATUS_REG_MMU_LSB))
+#define GET_BSTATUS_REG_MPU(Reg) \
+    (((Reg) >> BSTATUS_REG_MPU_LSB) & BSTATUS_REG_MPU_MASK)
+#define SET_BSTATUS_REG_MPU(Reg, Val) \
+    Reg = (((Reg) & (~(BSTATUS_REG_MPU_MASK << BSTATUS_REG_MPU_LSB))) | \
+         (((Val) & BSTATUS_REG_MPU_MASK) << BSTATUS_REG_MPU_LSB))
 #define GET_BSTATUS_REG_NO_MMU(Reg) \
     (((Reg) >> BSTATUS_REG_NO_MMU_LSB) & BSTATUS_REG_NO_MMU_MASK)
 #define SET_BSTATUS_REG_NO_MMU(Reg, Val) \
     Reg = (((Reg) & (~(BSTATUS_REG_NO_MMU_MASK << BSTATUS_REG_NO_MMU_LSB))) | \
          (((Val) & BSTATUS_REG_NO_MMU_MASK) << BSTATUS_REG_NO_MMU_LSB))
+#define GET_CONFIG_REG_PE(Reg) \
+    (((Reg) >> CONFIG_REG_PE_LSB) & CONFIG_REG_PE_MASK)
+#define SET_CONFIG_REG_PE(Reg, Val) \
+    Reg = (((Reg) & (~(CONFIG_REG_PE_MASK << CONFIG_REG_PE_LSB))) | \
+         (((Val) & CONFIG_REG_PE_MASK) << CONFIG_REG_PE_LSB))
 #define GET_ESTATUS_REG_MMU(Reg) \
     (((Reg) >> ESTATUS_REG_MMU_LSB) & ESTATUS_REG_MMU_MASK)
 #define SET_ESTATUS_REG_MMU(Reg, Val) \
     Reg = (((Reg) & (~(ESTATUS_REG_MMU_MASK << ESTATUS_REG_MMU_LSB))) | \
          (((Val) & ESTATUS_REG_MMU_MASK) << ESTATUS_REG_MMU_LSB))
+#define GET_ESTATUS_REG_MPU(Reg) \
+    (((Reg) >> ESTATUS_REG_MPU_LSB) & ESTATUS_REG_MPU_MASK)
+#define SET_ESTATUS_REG_MPU(Reg, Val) \
+    Reg = (((Reg) & (~(ESTATUS_REG_MPU_MASK << ESTATUS_REG_MPU_LSB))) | \
+         (((Val) & ESTATUS_REG_MPU_MASK) << ESTATUS_REG_MPU_LSB))
 #define GET_ESTATUS_REG_NO_MMU(Reg) \
     (((Reg) >> ESTATUS_REG_NO_MMU_LSB) & ESTATUS_REG_NO_MMU_MASK)
 #define SET_ESTATUS_REG_NO_MMU(Reg, Val) \
     Reg = (((Reg) & (~(ESTATUS_REG_NO_MMU_MASK << ESTATUS_REG_NO_MMU_LSB))) | \
          (((Val) & ESTATUS_REG_NO_MMU_MASK) << ESTATUS_REG_NO_MMU_LSB))
+#define GET_EXCEPTION_REG_CAUSE(Reg) \
+    (((Reg) >> EXCEPTION_REG_CAUSE_LSB) & EXCEPTION_REG_CAUSE_MASK)
+#define SET_EXCEPTION_REG_CAUSE(Reg, Val) \
+    Reg = (((Reg) & (~(EXCEPTION_REG_CAUSE_MASK << EXCEPTION_REG_CAUSE_LSB))) | \
+         (((Val) & EXCEPTION_REG_CAUSE_MASK) << EXCEPTION_REG_CAUSE_LSB))
 #define GET_EXCEPTION_REG_MEA(Reg) \
     (((Reg) >> EXCEPTION_REG_MEA_LSB) & EXCEPTION_REG_MEA_MASK)
 #define SET_EXCEPTION_REG_MEA(Reg, Val) \
@@ -536,6 +695,61 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define SET_EXCEPTION_REG_MEE(Reg, Val) \
     Reg = (((Reg) & (~(EXCEPTION_REG_MEE_MASK << EXCEPTION_REG_MEE_LSB))) | \
          (((Val) & EXCEPTION_REG_MEE_MASK) << EXCEPTION_REG_MEE_LSB))
+#define GET_MPUACC_REG_C(Reg) \
+    (((Reg) >> MPUACC_REG_C_LSB) & MPUACC_REG_C_MASK)
+#define SET_MPUACC_REG_C(Reg, Val) \
+    Reg = (((Reg) & (~(MPUACC_REG_C_MASK << MPUACC_REG_C_LSB))) | \
+         (((Val) & MPUACC_REG_C_MASK) << MPUACC_REG_C_LSB))
+#define GET_MPUACC_REG_LIMIT(Reg) \
+    (((Reg) >> MPUACC_REG_LIMIT_LSB) & MPUACC_REG_LIMIT_MASK)
+#define SET_MPUACC_REG_LIMIT(Reg, Val) \
+    Reg = (((Reg) & (~(MPUACC_REG_LIMIT_MASK << MPUACC_REG_LIMIT_LSB))) | \
+         (((Val) & MPUACC_REG_LIMIT_MASK) << MPUACC_REG_LIMIT_LSB))
+#define GET_MPUACC_REG_MASK(Reg) \
+    (((Reg) >> MPUACC_REG_MASK_LSB) & MPUACC_REG_MASK_MASK)
+#define SET_MPUACC_REG_MASK(Reg, Val) \
+    Reg = (((Reg) & (~(MPUACC_REG_MASK_MASK << MPUACC_REG_MASK_LSB))) | \
+         (((Val) & MPUACC_REG_MASK_MASK) << MPUACC_REG_MASK_LSB))
+#define GET_MPUACC_REG_PERM(Reg) \
+    (((Reg) >> MPUACC_REG_PERM_LSB) & MPUACC_REG_PERM_MASK)
+#define SET_MPUACC_REG_PERM(Reg, Val) \
+    Reg = (((Reg) & (~(MPUACC_REG_PERM_MASK << MPUACC_REG_PERM_LSB))) | \
+         (((Val) & MPUACC_REG_PERM_MASK) << MPUACC_REG_PERM_LSB))
+#define GET_MPUACC_REG_RD(Reg) \
+    (((Reg) >> MPUACC_REG_RD_LSB) & MPUACC_REG_RD_MASK)
+#define SET_MPUACC_REG_RD(Reg, Val) \
+    Reg = (((Reg) & (~(MPUACC_REG_RD_MASK << MPUACC_REG_RD_LSB))) | \
+         (((Val) & MPUACC_REG_RD_MASK) << MPUACC_REG_RD_LSB))
+#define GET_MPUACC_REG_RSV1(Reg) \
+    (((Reg) >> MPUACC_REG_RSV1_LSB) & MPUACC_REG_RSV1_MASK)
+#define SET_MPUACC_REG_RSV1(Reg, Val) \
+    Reg = (((Reg) & (~(MPUACC_REG_RSV1_MASK << MPUACC_REG_RSV1_LSB))) | \
+         (((Val) & MPUACC_REG_RSV1_MASK) << MPUACC_REG_RSV1_LSB))
+#define GET_MPUACC_REG_WR(Reg) \
+    (((Reg) >> MPUACC_REG_WR_LSB) & MPUACC_REG_WR_MASK)
+#define SET_MPUACC_REG_WR(Reg, Val) \
+    Reg = (((Reg) & (~(MPUACC_REG_WR_MASK << MPUACC_REG_WR_LSB))) | \
+         (((Val) & MPUACC_REG_WR_MASK) << MPUACC_REG_WR_LSB))
+#define GET_MPUBASE_REG_BASE(Reg) \
+    (((Reg) >> MPUBASE_REG_BASE_LSB) & MPUBASE_REG_BASE_MASK)
+#define SET_MPUBASE_REG_BASE(Reg, Val) \
+    Reg = (((Reg) & (~(MPUBASE_REG_BASE_MASK << MPUBASE_REG_BASE_LSB))) | \
+         (((Val) & MPUBASE_REG_BASE_MASK) << MPUBASE_REG_BASE_LSB))
+#define GET_MPUBASE_REG_D(Reg) \
+    (((Reg) >> MPUBASE_REG_D_LSB) & MPUBASE_REG_D_MASK)
+#define SET_MPUBASE_REG_D(Reg, Val) \
+    Reg = (((Reg) & (~(MPUBASE_REG_D_MASK << MPUBASE_REG_D_LSB))) | \
+         (((Val) & MPUBASE_REG_D_MASK) << MPUBASE_REG_D_LSB))
+#define GET_MPUBASE_REG_INDEX(Reg) \
+    (((Reg) >> MPUBASE_REG_INDEX_LSB) & MPUBASE_REG_INDEX_MASK)
+#define SET_MPUBASE_REG_INDEX(Reg, Val) \
+    Reg = (((Reg) & (~(MPUBASE_REG_INDEX_MASK << MPUBASE_REG_INDEX_LSB))) | \
+         (((Val) & MPUBASE_REG_INDEX_MASK) << MPUBASE_REG_INDEX_LSB))
+#define GET_MPUBASE_REG_RSV1(Reg) \
+    (((Reg) >> MPUBASE_REG_RSV1_LSB) & MPUBASE_REG_RSV1_MASK)
+#define SET_MPUBASE_REG_RSV1(Reg, Val) \
+    Reg = (((Reg) & (~(MPUBASE_REG_RSV1_MASK << MPUBASE_REG_RSV1_LSB))) | \
+         (((Val) & MPUBASE_REG_RSV1_MASK) << MPUBASE_REG_RSV1_LSB))
 #define GET_PTEADDR_REG_PTBASE(Reg) \
     (((Reg) >> PTEADDR_REG_PTBASE_LSB) & PTEADDR_REG_PTBASE_MASK)
 #define SET_PTEADDR_REG_PTBASE(Reg, Val) \
@@ -561,21 +775,16 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define SET_SIM_REG_PERF_CNT_EN(Reg, Val) \
     Reg = (((Reg) & (~(SIM_REG_PERF_CNT_EN_MASK << SIM_REG_PERF_CNT_EN_LSB))) | \
          (((Val) & SIM_REG_PERF_CNT_EN_MASK) << SIM_REG_PERF_CNT_EN_LSB))
-#define GET_SIM_REG_SHOW_DTLB(Reg) \
-    (((Reg) >> SIM_REG_SHOW_DTLB_LSB) & SIM_REG_SHOW_DTLB_MASK)
-#define SET_SIM_REG_SHOW_DTLB(Reg, Val) \
-    Reg = (((Reg) & (~(SIM_REG_SHOW_DTLB_MASK << SIM_REG_SHOW_DTLB_LSB))) | \
-         (((Val) & SIM_REG_SHOW_DTLB_MASK) << SIM_REG_SHOW_DTLB_LSB))
-#define GET_SIM_REG_SHOW_ITLB(Reg) \
-    (((Reg) >> SIM_REG_SHOW_ITLB_LSB) & SIM_REG_SHOW_ITLB_MASK)
-#define SET_SIM_REG_SHOW_ITLB(Reg, Val) \
-    Reg = (((Reg) & (~(SIM_REG_SHOW_ITLB_MASK << SIM_REG_SHOW_ITLB_LSB))) | \
-         (((Val) & SIM_REG_SHOW_ITLB_MASK) << SIM_REG_SHOW_ITLB_LSB))
 #define GET_SIM_REG_SHOW_MMU_REGS(Reg) \
     (((Reg) >> SIM_REG_SHOW_MMU_REGS_LSB) & SIM_REG_SHOW_MMU_REGS_MASK)
 #define SET_SIM_REG_SHOW_MMU_REGS(Reg, Val) \
     Reg = (((Reg) & (~(SIM_REG_SHOW_MMU_REGS_MASK << SIM_REG_SHOW_MMU_REGS_LSB))) | \
          (((Val) & SIM_REG_SHOW_MMU_REGS_MASK) << SIM_REG_SHOW_MMU_REGS_LSB))
+#define GET_SIM_REG_SHOW_TLB(Reg) \
+    (((Reg) >> SIM_REG_SHOW_TLB_LSB) & SIM_REG_SHOW_TLB_MASK)
+#define SET_SIM_REG_SHOW_TLB(Reg, Val) \
+    Reg = (((Reg) & (~(SIM_REG_SHOW_TLB_MASK << SIM_REG_SHOW_TLB_LSB))) | \
+         (((Val) & SIM_REG_SHOW_TLB_MASK) << SIM_REG_SHOW_TLB_LSB))
 #define GET_SIM_REG_STOP(Reg) \
     (((Reg) >> SIM_REG_STOP_LSB) & SIM_REG_STOP_MASK)
 #define SET_SIM_REG_STOP(Reg, Val) \
@@ -596,6 +805,16 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define SET_STATUS_REG_MMU_RSV(Reg, Val) \
     Reg = (((Reg) & (~(STATUS_REG_MMU_RSV_MASK << STATUS_REG_MMU_RSV_LSB))) | \
          (((Val) & STATUS_REG_MMU_RSV_MASK) << STATUS_REG_MMU_RSV_LSB))
+#define GET_STATUS_REG_MPU(Reg) \
+    (((Reg) >> STATUS_REG_MPU_LSB) & STATUS_REG_MPU_MASK)
+#define SET_STATUS_REG_MPU(Reg, Val) \
+    Reg = (((Reg) & (~(STATUS_REG_MPU_MASK << STATUS_REG_MPU_LSB))) | \
+         (((Val) & STATUS_REG_MPU_MASK) << STATUS_REG_MPU_LSB))
+#define GET_STATUS_REG_MPU_RSV(Reg) \
+    (((Reg) >> STATUS_REG_MPU_RSV_LSB) & STATUS_REG_MPU_RSV_MASK)
+#define SET_STATUS_REG_MPU_RSV(Reg, Val) \
+    Reg = (((Reg) & (~(STATUS_REG_MPU_RSV_MASK << STATUS_REG_MPU_RSV_LSB))) | \
+         (((Val) & STATUS_REG_MPU_RSV_MASK) << STATUS_REG_MPU_RSV_LSB))
 #define GET_STATUS_REG_NO_MMU(Reg) \
     (((Reg) >> STATUS_REG_NO_MMU_LSB) & STATUS_REG_NO_MMU_MASK)
 #define SET_STATUS_REG_NO_MMU(Reg, Val) \
@@ -681,11 +900,6 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define SET_TLBMISC_REG_RD(Reg, Val) \
     Reg = (((Reg) & (~(TLBMISC_REG_RD_MASK << TLBMISC_REG_RD_LSB))) | \
          (((Val) & TLBMISC_REG_RD_MASK) << TLBMISC_REG_RD_LSB))
-#define GET_TLBMISC_REG_RSV0(Reg) \
-    (((Reg) >> TLBMISC_REG_RSV0_LSB) & TLBMISC_REG_RSV0_MASK)
-#define SET_TLBMISC_REG_RSV0(Reg, Val) \
-    Reg = (((Reg) & (~(TLBMISC_REG_RSV0_MASK << TLBMISC_REG_RSV0_LSB))) | \
-         (((Val) & TLBMISC_REG_RSV0_MASK) << TLBMISC_REG_RSV0_LSB))
 #define GET_TLBMISC_REG_RSV1(Reg) \
     (((Reg) >> TLBMISC_REG_RSV1_LSB) & TLBMISC_REG_RSV1_MASK)
 #define SET_TLBMISC_REG_RSV1(Reg, Val) \
@@ -776,6 +990,7 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define OP_FLUSHD 59
 #define OP_FLUSHDA 27
 #define OP_INITD 51
+#define OP_INITDA 19
 #define OP_JMPI 1
 #define OP_LDB 7
 #define OP_LDBIO 39
@@ -785,6 +1000,7 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define OP_LDHIO 47
 #define OP_LDHU 11
 #define OP_LDHUIO 43
+#define OP_LDL 31
 #define OP_LDW 23
 #define OP_LDWIO 55
 #define OP_MULI 36
@@ -793,6 +1009,7 @@ extern const char* opx_names[NUM_OPX_INSTS];
 #define OP_ORI 20
 #define OP_STB 5
 #define OP_STBIO 37
+#define OP_STC 29
 #define OP_STH 13
 #define OP_STHIO 45
 #define OP_STW 21
@@ -957,6 +1174,8 @@ extern unsigned char opx_prop_mul[64];
 
 #define IW_PROP_UNIMPLEMENTED(Iw) (0)
 
+#define IW_PROP_ILLEGAL(Iw) (0)
+
 #define IW_PROP_IMPLICIT_DST_RETADDR(Iw) ( \
   ( \
     ((GET_IW_OP((Iw)) == OP_CALL)) \
@@ -966,28 +1185,28 @@ extern unsigned char opx_prop_mul[64];
 
 #define IW_PROP_IMPLICIT_DST_ERETADDR(Iw) (0)
 
+#define IW_PROP_INTR(Iw) ( \
+  ( \
+    ((GET_IW_OPX((Iw)) == OPX_INTR) && IS_OPX_INST(Iw)) \
+  ) \
+ \
+)
+
 #define IW_PROP_EXCEPTION(Iw) ( \
   ( \
-    ((GET_IW_OPX((Iw)) == OPX_TRAP) && IS_OPX_INST(Iw)) || \
-    ((GET_IW_OPX((Iw)) == OPX_INTR) && IS_OPX_INST(Iw)) \
+    ((GET_IW_OPX((Iw)) == OPX_TRAP) && IS_OPX_INST(Iw)) \
   ) \
  \
 )
 
 #define IW_PROP_BREAK(Iw) ( \
   ( \
-    ((GET_IW_OPX((Iw)) == OPX_BREAK) && IS_OPX_INST(Iw)) || \
-    ((GET_IW_OPX((Iw)) == OPX_HBREAK) && IS_OPX_INST(Iw)) \
+    ((GET_IW_OPX((Iw)) == OPX_BREAK) && IS_OPX_INST(Iw)) \
   ) \
  \
 )
 
-#define IW_PROP_CRST(Iw) ( \
-  ( \
-    ((GET_IW_OPX((Iw)) == OPX_CRST) && IS_OPX_INST(Iw)) \
-  ) \
- \
-)
+#define IW_PROP_CRST(Iw) (0)
 
 #define IW_PROP_WR_CTL_REG(Iw) ( \
     (IS_OPX_INST(Iw) && opx_prop_wr_ctl_reg[GET_IW_OPX(Iw)]))
@@ -1369,12 +1588,11 @@ extern unsigned char op_prop_load16[64];
 #endif /* ALT_ASM_SRC */
 
 #define IW_PROP_LOAD32(Iw) ( \
-  ( \
-    ((GET_IW_OP((Iw)) == OP_LDW)) || \
-    ((GET_IW_OP((Iw)) == OP_LDWIO)) \
-  ) \
- \
-)
+    (op_prop_load32[GET_IW_OP(Iw)]))
+
+#ifndef ALT_ASM_SRC
+extern unsigned char op_prop_load32[64];
+#endif /* ALT_ASM_SRC */
 
 #define IW_PROP_LOAD_SIGNED(Iw) ( \
     (op_prop_load_signed[GET_IW_OP(Iw)]))
@@ -1397,11 +1615,18 @@ extern unsigned char op_prop_load_unsigned[64];
 extern unsigned char op_prop_load[64];
 #endif /* ALT_ASM_SRC */
 
-#define IW_PROP_LOAD_INITD_FLUSHD_FLUSHDA(Iw) ( \
-    (op_prop_load_initd_flushd_flushda[GET_IW_OP(Iw)]))
+#define IW_PROP_DCACHE_MANAGEMENT_NOP(Iw) ( \
+    (op_prop_dcache_management_nop[GET_IW_OP(Iw)]))
 
 #ifndef ALT_ASM_SRC
-extern unsigned char op_prop_load_initd_flushd_flushda[64];
+extern unsigned char op_prop_dcache_management_nop[64];
+#endif /* ALT_ASM_SRC */
+
+#define IW_PROP_LOAD_DCACHE_MANAGEMENT(Iw) ( \
+    (op_prop_load_dcache_management[GET_IW_OP(Iw)]))
+
+#ifndef ALT_ASM_SRC
+extern unsigned char op_prop_load_dcache_management[64];
 #endif /* ALT_ASM_SRC */
 
 #define IW_PROP_LOAD_NON_IO(Iw) ( \
@@ -1428,12 +1653,11 @@ extern unsigned char op_prop_load_non_io[64];
 )
 
 #define IW_PROP_STORE32(Iw) ( \
-  ( \
-    ((GET_IW_OP((Iw)) == OP_STW)) || \
-    ((GET_IW_OP((Iw)) == OP_STWIO)) \
-  ) \
- \
-)
+    (op_prop_store32[GET_IW_OP(Iw)]))
+
+#ifndef ALT_ASM_SRC
+extern unsigned char op_prop_store32[64];
+#endif /* ALT_ASM_SRC */
 
 #define IW_PROP_STORE(Iw) ( \
     (op_prop_store[GET_IW_OP(Iw)]))
@@ -1463,9 +1687,23 @@ extern unsigned char op_prop_mem[64];
  \
 )
 
+#define IW_PROP_INITDA(Iw) ( \
+  ( \
+    ((GET_IW_OP((Iw)) == OP_INITDA)) \
+  ) \
+ \
+)
+
 #define IW_PROP_FLUSHD(Iw) ( \
   ( \
     ((GET_IW_OP((Iw)) == OP_FLUSHD)) \
+  ) \
+ \
+)
+
+#define IW_PROP_FLUSHDA(Iw) ( \
+  ( \
+    ((GET_IW_OP((Iw)) == OP_FLUSHDA)) \
   ) \
  \
 )
@@ -1478,9 +1716,18 @@ extern unsigned char op_prop_mem[64];
  \
 )
 
-#define IW_PROP_FLUSHDA(Iw) ( \
+#define IW_PROP_INITDA_FLUSHDA(Iw) ( \
   ( \
+    ((GET_IW_OP((Iw)) == OP_INITDA)) || \
     ((GET_IW_OP((Iw)) == OP_FLUSHDA)) \
+  ) \
+ \
+)
+
+#define IW_PROP_INITD_INITDA(Iw) ( \
+  ( \
+    ((GET_IW_OP((Iw)) == OP_INITD)) || \
+    ((GET_IW_OP((Iw)) == OP_INITDA)) \
   ) \
  \
 )
@@ -1498,6 +1745,13 @@ extern unsigned char op_prop_mem[64];
 
 #ifndef ALT_ASM_SRC
 extern unsigned char op_prop_initd_flushd_flushda[64];
+#endif /* ALT_ASM_SRC */
+
+#define IW_PROP_DCACHE_MANAGEMENT(Iw) ( \
+    (op_prop_dcache_management[GET_IW_OP(Iw)]))
+
+#ifndef ALT_ASM_SRC
+extern unsigned char op_prop_dcache_management[64];
 #endif /* ALT_ASM_SRC */
 
 #define IW_PROP_LOAD_IO(Iw) ( \
@@ -1691,81 +1945,84 @@ extern unsigned char opx_prop_src2_no_x[64];
 #define BGE_INST_CODE 11
 #define LDH_INST_CODE 12
 #define CMPLTI_INST_CODE 13
-#define ORI_INST_CODE 14
-#define STW_INST_CODE 15
-#define BLT_INST_CODE 16
-#define LDW_INST_CODE 17
-#define CMPNEI_INST_CODE 18
-#define FLUSHDA_INST_CODE 19
-#define XORI_INST_CODE 20
-#define BNE_INST_CODE 21
-#define CMPEQI_INST_CODE 22
-#define LDBUIO_INST_CODE 23
-#define MULI_INST_CODE 24
-#define STBIO_INST_CODE 25
-#define BEQ_INST_CODE 26
-#define LDBIO_INST_CODE 27
-#define CMPGEUI_INST_CODE 28
-#define LDHUIO_INST_CODE 29
-#define ANDHI_INST_CODE 30
-#define STHIO_INST_CODE 31
-#define BGEU_INST_CODE 32
-#define LDHIO_INST_CODE 33
-#define CMPLTUI_INST_CODE 34
-#define CUSTOM_INST_CODE 35
-#define INITD_INST_CODE 36
-#define ORHI_INST_CODE 37
-#define STWIO_INST_CODE 38
-#define BLTU_INST_CODE 39
-#define LDWIO_INST_CODE 40
-#define FLUSHD_INST_CODE 41
-#define XORHI_INST_CODE 42
-#define ERET_INST_CODE 43
-#define ROLI_INST_CODE 44
-#define ROL_INST_CODE 45
-#define FLUSHP_INST_CODE 46
-#define RET_INST_CODE 47
-#define NOR_INST_CODE 48
-#define MULXUU_INST_CODE 49
-#define CMPGE_INST_CODE 50
-#define BRET_INST_CODE 51
-#define ROR_INST_CODE 52
-#define FLUSHI_INST_CODE 53
-#define JMP_INST_CODE 54
-#define AND_INST_CODE 55
-#define CMPLT_INST_CODE 56
-#define SLLI_INST_CODE 57
-#define SLL_INST_CODE 58
-#define OR_INST_CODE 59
-#define MULXSU_INST_CODE 60
-#define CMPNE_INST_CODE 61
-#define SRLI_INST_CODE 62
-#define SRL_INST_CODE 63
-#define NEXTPC_INST_CODE 64
-#define CALLR_INST_CODE 65
-#define XOR_INST_CODE 66
-#define MULXSS_INST_CODE 67
-#define CMPEQ_INST_CODE 68
-#define DIVU_INST_CODE 69
-#define DIV_INST_CODE 70
-#define RDCTL_INST_CODE 71
-#define MUL_INST_CODE 72
-#define CMPGEU_INST_CODE 73
-#define INITI_INST_CODE 74
-#define TRAP_INST_CODE 75
-#define WRCTL_INST_CODE 76
-#define CMPLTU_INST_CODE 77
-#define ADD_INST_CODE 78
-#define BREAK_INST_CODE 79
-#define HBREAK_INST_CODE 80
-#define SYNC_INST_CODE 81
-#define SUB_INST_CODE 82
-#define SRAI_INST_CODE 83
-#define SRA_INST_CODE 84
-#define INTR_INST_CODE 85
-#define CRST_INST_CODE 86
-#define RSV_INST_CODE 87
-#define NUM_NIOS2_INST_CODES 88
+#define INITDA_INST_CODE 14
+#define ORI_INST_CODE 15
+#define STW_INST_CODE 16
+#define BLT_INST_CODE 17
+#define LDW_INST_CODE 18
+#define CMPNEI_INST_CODE 19
+#define FLUSHDA_INST_CODE 20
+#define XORI_INST_CODE 21
+#define STC_INST_CODE 22
+#define BNE_INST_CODE 23
+#define LDL_INST_CODE 24
+#define CMPEQI_INST_CODE 25
+#define LDBUIO_INST_CODE 26
+#define MULI_INST_CODE 27
+#define STBIO_INST_CODE 28
+#define BEQ_INST_CODE 29
+#define LDBIO_INST_CODE 30
+#define CMPGEUI_INST_CODE 31
+#define LDHUIO_INST_CODE 32
+#define ANDHI_INST_CODE 33
+#define STHIO_INST_CODE 34
+#define BGEU_INST_CODE 35
+#define LDHIO_INST_CODE 36
+#define CMPLTUI_INST_CODE 37
+#define CUSTOM_INST_CODE 38
+#define INITD_INST_CODE 39
+#define ORHI_INST_CODE 40
+#define STWIO_INST_CODE 41
+#define BLTU_INST_CODE 42
+#define LDWIO_INST_CODE 43
+#define FLUSHD_INST_CODE 44
+#define XORHI_INST_CODE 45
+#define ERET_INST_CODE 46
+#define ROLI_INST_CODE 47
+#define ROL_INST_CODE 48
+#define FLUSHP_INST_CODE 49
+#define RET_INST_CODE 50
+#define NOR_INST_CODE 51
+#define MULXUU_INST_CODE 52
+#define CMPGE_INST_CODE 53
+#define BRET_INST_CODE 54
+#define ROR_INST_CODE 55
+#define FLUSHI_INST_CODE 56
+#define JMP_INST_CODE 57
+#define AND_INST_CODE 58
+#define CMPLT_INST_CODE 59
+#define SLLI_INST_CODE 60
+#define SLL_INST_CODE 61
+#define OR_INST_CODE 62
+#define MULXSU_INST_CODE 63
+#define CMPNE_INST_CODE 64
+#define SRLI_INST_CODE 65
+#define SRL_INST_CODE 66
+#define NEXTPC_INST_CODE 67
+#define CALLR_INST_CODE 68
+#define XOR_INST_CODE 69
+#define MULXSS_INST_CODE 70
+#define CMPEQ_INST_CODE 71
+#define DIVU_INST_CODE 72
+#define DIV_INST_CODE 73
+#define RDCTL_INST_CODE 74
+#define MUL_INST_CODE 75
+#define CMPGEU_INST_CODE 76
+#define INITI_INST_CODE 77
+#define TRAP_INST_CODE 78
+#define WRCTL_INST_CODE 79
+#define CMPLTU_INST_CODE 80
+#define ADD_INST_CODE 81
+#define BREAK_INST_CODE 82
+#define HBREAK_INST_CODE 83
+#define SYNC_INST_CODE 84
+#define SUB_INST_CODE 85
+#define SRAI_INST_CODE 86
+#define SRA_INST_CODE 87
+#define INTR_INST_CODE 88
+#define CRST_INST_CODE 89
+#define RSV_INST_CODE 90
+#define NUM_NIOS2_INST_CODES 91
 
 #ifndef ALT_ASM_SRC
 /* Instruction information entry */
@@ -1856,5 +2113,18 @@ extern int opxToInstCode[64];
 
 /* Bitwise OR with a KERNEL region address to make it an IO region address */
 #define KERNEL_TO_IO_REGION 0x20000000
+
+/* Exception information */
+#ifndef ALT_ASM_SRC
+typedef struct {
+    const char* name;
+    int priority;
+    int subPriority; /* -1 if none */
+    int causeId; /* -1 if none */
+    int recordAddr;
+} ExcInfo;
+
+extern ExcInfo excInfo[NUM_EXC_IDS];
+#endif /* ALT_ASM_SRC */
 
 #endif /* _NIOS2_ISA_H_ */
